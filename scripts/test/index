@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+
+# clean old temporal database
+npm run test:clean
+
+# create new temporal database
+createdb models-wrapper-test
+
+# create table
+node test/create-table.js
+
+# run tests
+mocha test/models-wrapper.js
