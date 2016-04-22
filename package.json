@@ -1,0 +1,25 @@
+{
+  "name": "models-wrapper",
+  "version": "0.0.1",
+  "description": "A wrapper around Krypton models to isolate the models' environment",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/greduan/models-wrapper.git"
+  },
+  "keywords": [
+    "knex",
+    "neon",
+    "neonode",
+    "orm"
+  ],
+  "author": "Eduardo Lavaque <me@greduan.com> (http://greduan.com)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/greduan/models-wrapper/issues"
+  },
+  "homepage": "https://github.com/greduan/models-wrapper#readme"
+}
