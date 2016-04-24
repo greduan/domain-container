@@ -11,7 +11,6 @@ vim: ts=2:sw=2:expandtab
 - [Background](#background)
 - [Constraints](#constraints)
 - [Assumptions](#assumptions)
-- [Blackbox](#blackbox)
 - [Functional spec](#functional-spec)
 - [Technical spec](#technical-spec)
 - [Examples](#examples)
