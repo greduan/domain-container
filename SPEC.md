@@ -229,7 +229,7 @@ prototype: {
 
   init: function (initProps) {
     var that = this;
-    
+
     if (_.isUndefined(initProps.knex)) {
       throw new Error('initProps.knex property is required');
     }
@@ -318,7 +318,7 @@ Pseudo-code:
 protoype: {
   update: function (model, body) {
     var that = this;
-    
+
     _.extend(model, that._customProps);
 
     model.updateAttributes(body);
@@ -331,7 +331,7 @@ protoype: {
 },
 ```
 
-##### `#delete(<Model> model)`
+##### `#destroy(<Model> model)`
 
 This method destroys the record in the DB for the provided model (`<Model>
 model` parameter).
@@ -384,7 +384,7 @@ ModelsWrapper({
   _models: ..., // same as provided above
   _customProps: ..., // same as provided above, empty object default though
   presenters: {}, // empty object default
-  
+
   query: function () {...},
   create: function () {...},
   update: function () {...},
