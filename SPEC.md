@@ -558,16 +558,25 @@ General flow:
 What the above effectively achieves is to have one configuration of models for
 `foo` subdomain and another for `bar` subdomain.
 
+### `customProps` use cases
+
 #### Mailers
 
-In this multi-site setup one could have the front end views adapt to the
-environment contained in the `req` variable if one is clever, often that is the
-only choice you have, but a mailer's views do not have access to the `req`
-object, since a mailer is standalone, so usually you would have to instantiate a
-mailer, with the environment specific vars passed in, and send the email, in the
-end you pass the `req` around some more.
+Let's say you've a multi-site setup, so you must know the current URL being used
+in order to send your emails in your mailers, simply create one instance of the
+mailer per site and the instance should keep track of the URL.
 
-But with the ModelsWrapper, you could just pass in a UserMailer instance as one
-of the properties in the `customProps` at instantiation, this would mean that
-when the models send emails they would have access to the mailers right away
-without having to pass it in manually or in a particularly special way.
+OK, but the models want to use the mailers, they can't do
+`UserMailer.sendEmail()` just like that, because they don't have the context of
+the mailer's instance, unless you put the mailer in the `req` and give the model
+the `req`, but we want to avoid that.
+
+So we can give the ModelsWrapper instance the mailer instances through the
+`customProps` property, as `customProps.mailers` or something like that.
+
+The ModelsWrapper then will assign `customProps.mailers` to each model when it
+instantiates it itself or when it's handling a model it is given, so that the
+model has the contextualized mailers available to it.
+
+The models can then use the mailers as `this.mailers.user.sendEmail()` and the
+email will be sent with the proper context of the current domain.
