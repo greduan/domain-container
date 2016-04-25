@@ -89,10 +89,6 @@ database environments.
 
 ## Functional spec
 
-**NOTICE: Please ignore the Technical spec below for now, the spec is not yet
-at a point where that is relevant.  Please only read this Functional spec.
-Below the Technical spec there are other things to read though, just FYI.**
-
 The module will provide a Neon class called ModelsWrapper.
 
 This class, at instantiation, will take on Knex instance, an object with
@@ -142,10 +138,6 @@ Observations:
 
 ## Technical spec
 
-**NOTICE: Please ignore this for now, the spec is not yet at a point where this
-is relevant.  Please only read the Functional spec above.  Below this Technical
-spec there are other things to read though, just FYI.**
-
 ### Class `ModelsWrapper(<Object> initProps)`
 
 `<Object> initProps` available properties:
@@ -192,7 +184,7 @@ instantiating the ModelsWrapper.
 ##### `presenters`
 
 **NOTICE:** Presenters are currently not used, while how to define them is
-defined in this document, they are not in use and thus the rest of the spec will
+defined at this document, they are not in use and thus the rest of the spec will
 not define how to make use of them.
 
 Presenters are functions that modify the model they are passed in in order to
@@ -225,6 +217,9 @@ presenters: {
 This method is run whenever the Class is instantiated, i.e. whenever a new
 ModelsWrapper instance is created.
 
+It should throw an error if `initProps.knex` or `initProps.models` are not
+defined or if `initProps.models` is not an object.
+
 ```javascript
 prototype: {
   _knex: null,
@@ -234,15 +229,24 @@ prototype: {
 
   init: function (initProps) {
     var that = this;
+    
+    if (_.isUndefined(initProps.knex)) {
+      throw new Error('initProps.knex property is required');
+    }
 
     that._knex = initProps.knex;
+
+    if (_.isUndefined(initProps.models) || !_.isObject(initProps.models)) {
+      throw new Error('initProps.models property is required and should be an object');
+    }
+
     that._models = initProps.models;
 
-    if (!_.isUndefined(initProps.customProps)) {
+    if (_.isUndefined(initProps.customProps)) {
       that._customProps = initProps.customProps;
     }
 
-    if (!_.isUndefined(initProps.presenters)) {
+    if (_.isUndefined(initProps.presenters)) {
       that.presenters = initProps.presenters;
     }
   },
@@ -263,7 +267,7 @@ prototype: {
 
     var Model = that._models[modelName];
 
-    if (!Model) {
+    if (_.isUndefined(Model)) {
       throw new Error('Model ' + modelName + ' doesn\'t exist in the ModelsWrapper');
     }
 
@@ -288,7 +292,7 @@ prototype: {
 
     var Model = that._models[modelName];
 
-    if (!Model) {
+    if (_.isUndefined(Model)) {
       throw new Error('Model ' + modelName + ' doesn\'t exist in the ModelsWrapper');
     }
 
@@ -314,6 +318,8 @@ Pseudo-code:
 protoype: {
   update: function (model, body) {
     var that = this;
+    
+    _.extend(model, that._customProps);
 
     model.updateAttributes(body);
 
@@ -336,6 +342,8 @@ Pseudo-code:
 protoype: {
   destroy: function (model) {
     var that = this;
+
+    _.extend(model, that._customProps);
 
     return model.destroy(that._knex)
       .then(function () {
