@@ -3,6 +3,7 @@
 require('neon');
 
 var _ = require('lodash');
+var Promise = require('bluebird');
 
 var ModelsWrapper = Class({}, 'ModelsWrapper')({
 
@@ -15,8 +16,17 @@ var ModelsWrapper = Class({}, 'ModelsWrapper')({
 
     init: function (initProps) {
       var that = this;
-      
+
+      if (_.isUndefined(initProps.knex)) {
+        throw new Error('initProps.knex property is required');
+      }
+
       that._knex = initProps.knex;
+
+      if (_.isUndefined(initProps.models) || !_.isObject(initProps.models)) {
+        throw new Error('initProps.models property is required and should be an object');
+      }
+
       that._models = initProps.models;
 
       if (!_.isUndefined(initProps.customProps)) {
@@ -33,8 +43,8 @@ var ModelsWrapper = Class({}, 'ModelsWrapper')({
 
       var Model = that._models[modelName];
 
-      if (!Model) {
-        throw new Error('Model ' + modelName + ' doesn\'t exist in the ModelsWrapper');
+      if (_.isUndefined(Model)) {
+        return Promise.reject(new Error('Model ' + modelName + ' doesn\'t exist in the ModelsWrapper'));
       }
 
       return Model.query(that._knex);
@@ -45,8 +55,8 @@ var ModelsWrapper = Class({}, 'ModelsWrapper')({
 
       var Model = that._models[modelName];
 
-      if (!Model) {
-        throw new Error('Model ' + modelName + ' doesn\'t exist in the ModelsWrapper');
+      if (_.isUndefined(Model)) {
+        return Promise.reject(new Error('Model ' + modelName + ' doesn\'t exist in the ModelsWrapper'));
       }
 
       var model = new Model(that._customProps);
@@ -60,7 +70,9 @@ var ModelsWrapper = Class({}, 'ModelsWrapper')({
 
     update: function (model, body) {
       var that = this;
-      
+
+      _.extend(model, that._customProps);
+
       model.updateAttributes(body);
 
       return model.save(that._knex)
@@ -71,7 +83,9 @@ var ModelsWrapper = Class({}, 'ModelsWrapper')({
 
     destroy: function (model) {
       var that = this;
-      
+
+      _.extend(model, that._customProps);
+
       return model.destroy(that._knex)
         .then(function () {
           return model;
