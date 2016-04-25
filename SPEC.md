@@ -14,6 +14,7 @@ vim: ts=2:sw=2:expandtab
 - [Blackbox](#blackbox)
 - [Functional spec](#functional-spec)
 - [Technical spec](#technical-spec)
+- [Code snippets](#code-snippets)
 - [Examples](#examples)
   - [Multi-site](#multi-site)
 
@@ -67,155 +68,24 @@ ModelsWrapper, and that is the main purpose they were designed for.
 
 ## Blackbox
 
-Here we'll just do some basic blackbox examples to give an idea of behaviour.
+![blackbox image on imgur](http://i.imgur.com/YVSiQYL.png)
 
----
-
-Let's quickly see what an instance looks like.
-
-Input:
-
-``` javascript
-var wrapper = new Wrapper({
-  knex: knex, // we got this from somewhere
-  models: {
-    User: User, // we got this from somewhere
-  },
-  customProps: {
-    mailers: mailers, // we got this from somewhere
-  },
-});
-```
-
-Output:
-
-``` javascript
-// this is an instance of ModelsWrapper
-ModelsWrapper({
-  _knex: ..., // same as provided above
-  _models: ..., // same as provided above
-  _customProps: ..., // same as provided above, empty object default though
-  presenters: {}, // empty object default
-  
-  query: function () {...},
-  create: function () {...},
-  update: function () {...},
-  destroy: function () {...},
-});
-```
-
----
-
-``` javascript
-var wrapper = new ModelsWrapper({...});
-
-wrapper.query('User'); // => User QueryBuilder
-```
-
----
-
-``` javascript
-var wrapper = new ModelsWrapper({...});
-
-wrapper
-  .create('User', {
-    email: 'example@gmail.com',
-    password: 'yay',
-  })
-  .then(function (user) {
-    // user is the model of the record that was created in the DB
-  });
-
-// In the DB there is a new record:
-// {
-//   id: 1,
-//   email: 'example@gmail.com',
-//   password: 'yay',
-// }
-//
-// An email is sent from a mailer to example@gmail.com with a token
-```
-
----
-
-``` javascript
-var wrapper = new ModelsWrapper({...});
-
-var model = new User({ id: 1 });
-
-wrapper
-  .update(model, {
-    password: 'nope',
-  })
-  .then(function (user) {
-    // user is the model of the record that was created in the DB
-  });
-
-// In the DB, the record created above is updated to:
-// {
-//   id: 1,
-//   password: 'nope',
-//   ...
-// }
-//
-// An email is sent from a mailer to example@gmail.com to inform of password change
-```
-
----
-
-``` javascript
-var wrapper = new ModelsWrapper({...});
-
-var model = new User({ id: 1 });
-
-wrapper
-  .destroy(model)
-  .then(function () {
-    // ...
-  });
-
-// In the DB, the record created above no longer exists
-```
-
----
-
-To quickly demonstrate the use of several Knex instances:
-
-``` javascript
-var wrapper1 = new ModelsWrapper({
-  ...
-  knex: knex1,
-  ...
-});
-
-var wrapper2 = new ModelsWrapper({
-  ...
-  knex: knex2,
-  ...
-});
-
-wrapper1.query('User')
-  .where('id', 1)
-  .then(function (result) {
-    console.log(result);
-    // => {
-    //   id: 1,
-    //   email: 'first-wrapper@example.com',
-    //   ...
-    // }
-  });
-
-wrapper2.query('User')
-  .where('id', 1)
-  .then(function (result) {
-    console.log(result);
-    // => {
-    //   id: 1,
-    //   email: 'second-wrapper@example.com',
-    //   ...
-    // }
-  });
-```
+- `._knex` is a Knex instance passed in at instantiation.
+- `._customProps` is an object with things to pass to models before they
+  interact with the DB.  Examples of usage are mailer instances or other such
+  things.
+- `._models` is an object containing Krypton model constructors.  The methods
+  reference this object in order to generate new models.
+- `#query()` is a method that returns a QueryBuilder for the requested model
+  (which it grabs from `._models`) passing in the `._knex` instance.
+- `#create()` is a method that creates the requested model (which it grabs from
+  `._models`) with the provided body, it saves to DB using `._knex` and passes
+  to the model the `._customProps` before doing `model.save()`.
+- `#update()` is a method that updates the provided model with the provided
+  body, it saves to DB using `._knex` and passes to the model the
+  `._customProps` before doing `model.save()`.
+- `#destroy()` is a method that destroys the provided model using `._knex`,
+  passes to the model the `._customProps` before doing `model.destroy()`.
 
 ## Functional spec
 
@@ -473,6 +343,158 @@ protoype: {
       });
   },
 },
+```
+
+## Code snippets
+
+Here we'll just do some basic blackbox examples to give an idea of behaviour.
+
+---
+
+Let's quickly see what an instance looks like.
+
+Input:
+
+``` javascript
+var wrapper = new Wrapper({
+  knex: knex, // we got this from somewhere
+  models: {
+    User: User, // we got this from somewhere
+  },
+  customProps: {
+    mailers: mailers, // we got this from somewhere
+  },
+});
+```
+
+Output:
+
+``` javascript
+// this is an instance of ModelsWrapper
+ModelsWrapper({
+  _knex: ..., // same as provided above
+  _models: ..., // same as provided above
+  _customProps: ..., // same as provided above, empty object default though
+  presenters: {}, // empty object default
+  
+  query: function () {...},
+  create: function () {...},
+  update: function () {...},
+  destroy: function () {...},
+});
+```
+
+---
+
+``` javascript
+var wrapper = new ModelsWrapper({...});
+
+wrapper.query('User'); // => User QueryBuilder
+```
+
+---
+
+``` javascript
+var wrapper = new ModelsWrapper({...});
+
+wrapper
+  .create('User', {
+    email: 'example@gmail.com',
+    password: 'yay',
+  })
+  .then(function (user) {
+    // user is the model of the record that was created in the DB
+  });
+
+// In the DB there is a new record:
+// {
+//   id: 1,
+//   email: 'example@gmail.com',
+//   password: 'yay',
+// }
+//
+// An email is sent from a mailer to example@gmail.com with a token
+```
+
+---
+
+``` javascript
+var wrapper = new ModelsWrapper({...});
+
+var model = new User({ id: 1 });
+
+wrapper
+  .update(model, {
+    password: 'nope',
+  })
+  .then(function (user) {
+    // user is the model of the record that was created in the DB
+  });
+
+// In the DB, the record created above is updated to:
+// {
+//   id: 1,
+//   password: 'nope',
+//   ...
+// }
+//
+// An email is sent from a mailer to example@gmail.com to inform of password change
+```
+
+---
+
+``` javascript
+var wrapper = new ModelsWrapper({...});
+
+var model = new User({ id: 1 });
+
+wrapper
+  .destroy(model)
+  .then(function () {
+    // ...
+  });
+
+// In the DB, the record created above no longer exists
+```
+
+---
+
+To quickly demonstrate the use of several Knex instances:
+
+``` javascript
+var wrapper1 = new ModelsWrapper({
+  ...
+  knex: knex1,
+  ...
+});
+
+var wrapper2 = new ModelsWrapper({
+  ...
+  knex: knex2,
+  ...
+});
+
+wrapper1.query('User')
+  .where('id', 1)
+  .then(function (result) {
+    console.log(result);
+    // => {
+    //   id: 1,
+    //   email: 'first-wrapper@example.com',
+    //   ...
+    // }
+  });
+
+wrapper2.query('User')
+  .where('id', 1)
+  .then(function (result) {
+    console.log(result);
+    // => {
+    //   id: 1,
+    //   email: 'second-wrapper@example.com',
+    //   ...
+    // }
+  });
 ```
 
 ## Examples
