@@ -268,7 +268,7 @@ prototype: {
     var Model = that._models[modelName];
 
     if (_.isUndefined(Model)) {
-      throw new Error('Model ' + modelName + ' doesn\'t exist in the ModelsWrapper');
+      return Promise.reject(new Error('Model ' + modelName + ' doesn\'t exist in the ModelsWrapper'));
     }
 
     return Model.query(that._knex);
@@ -293,7 +293,7 @@ prototype: {
     var Model = that._models[modelName];
 
     if (_.isUndefined(Model)) {
-      throw new Error('Model ' + modelName + ' doesn\'t exist in the ModelsWrapper');
+      return Promise.reject(new Error('Model ' + modelName + ' doesn\'t exist in the ModelsWrapper'));
     }
 
     var model = new Model(that._customProps);
