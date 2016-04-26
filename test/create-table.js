@@ -13,6 +13,15 @@ knex.schema
     t.string('one');
     t.string('two');
   })
+  .createTable('bar', function (t) {
+    t.increments();
+    t.integer('foo_id')
+      .notNullable()
+      .references('id')
+      .inTable('foo')
+      .onDelete('CASCADE');
+    t.string('two');
+  })
   .then(function () {
     process.exit(0);
   })

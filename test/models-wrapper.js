@@ -19,8 +19,25 @@ var Foo = Class({}, 'Foo').inherits(Krypton.Model)({
   attributes: ['id', 'one', 'two'],
 });
 
+var Bar = Class({}, 'Bar').inherits(Krypton.Model)({
+  tableName: 'bar',
+  validations: {
+    fooId: ['required'],
+  },
+  attributes: ['id', 'fooId', 'two'],
+  relations: {
+    foo: {
+      type: 'HasOne',
+      relatedModel: Foo,
+      ownerCol: 'foo_id',
+      relatedCol: 'id',
+    }
+  },
+});
+
 var models = {
   Foo: Foo,
+  Bar: Bar,
 };
 
 describe('ModelsWrapper', function () {
@@ -376,7 +393,62 @@ describe('ModelsWrapper', function () {
         .catch(doneTest);
     });
 
-    // it('Should ', function (doneTest) {});
+  });
+
+  describe('Relations', function () {
+
+    // clean env for each test
+    beforeEach(function (done) {
+      knex('foo')
+        .delete()
+        .then(function () {
+          return knex('foo')
+            .insert({ one: '1', two: '2' });
+        })
+        .then(function () {
+          return knex('foo')
+            .select('id');
+        })
+        .then(function (result) {
+          return knex('bar')
+            .insert({ foo_id: result[0].id, two: '2' });
+        })
+        .then(function () {
+          return done();
+        })
+        .catch(done);
+    });
+
+    // clean it all up
+    after(function (done) {
+      knex('foo')
+        .delete()
+        .then(function () {
+          return done();
+        })
+        .catch(done);
+    });
+
+    var wrapper = new ModelsWrapper({
+      knex: knex,
+      models: models,
+    });
+
+    it('Should return the correct record', function (doneTest) {
+      wrapper.query('Bar')
+        .include('foo')
+        .then(function (result) {
+          expect(result).to.have.length(1);
+
+          var bar = result[0];
+
+          expect(bar.foo).to.be.an('object');
+          expect(bar.foo.id).to.equal(bar.fooId);
+
+          return doneTest();
+        })
+        .catch(doneTest);
+    });
 
   });
 
