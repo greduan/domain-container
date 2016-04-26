@@ -2,14 +2,14 @@
 
 var expect = require('expect.js');
 
-var ModelsWrapper = require('./..');
+var DomainContainer = require('./..');
 
 require('krypton-orm');
 
 var knex = require('knex')({
   client: 'pg',
   connection: {
-    database: 'models-wrapper-test',
+    database: 'domain-container-test',
   },
 });
 
@@ -40,13 +40,13 @@ var models = {
   Bar: Bar,
 };
 
-describe('ModelsWrapper', function () {
+describe('DomainContainer', function () {
 
   describe('Instantiation', function () {
 
     it('Should instantiate with no errors', function (doneTest) {
       var func = function () {
-        var wrapper = new ModelsWrapper({
+        var container = new DomainContainer({
           knex: knex,
           models: models,
           customProps: {},
@@ -61,7 +61,7 @@ describe('ModelsWrapper', function () {
 
     it('Should instantiate with no errors when not provided optional params', function (doneTest) {
       var func = function () {
-        var wrapper = new ModelsWrapper({
+        var container = new DomainContainer({
           knex: knex,
           models: models,
         });
@@ -74,7 +74,7 @@ describe('ModelsWrapper', function () {
 
     it('Should throw when not provided initProps.models', function (doneTest) {
       var func = function () {
-        var wrapper = new ModelsWrapper({
+        var container = new DomainContainer({
           knex: knex,
         });
       };
@@ -86,7 +86,7 @@ describe('ModelsWrapper', function () {
 
     it('Should throw when not provided initProps.knex', function (doneTest) {
       var func = function () {
-        var wrapper = new ModelsWrapper({
+        var container = new DomainContainer({
           models: models,
         });
       };
@@ -97,7 +97,7 @@ describe('ModelsWrapper', function () {
     });
 
     it('Should have the correct properties when instantiated', function (doneTest) {
-      var wrapper = new ModelsWrapper({
+      var container = new DomainContainer({
         knex: knex,
         models: models,
         customProps: {
@@ -108,24 +108,24 @@ describe('ModelsWrapper', function () {
         },
       });
 
-      expect(wrapper._knex).to.exist;
-      expect(wrapper._models).to.exist;
-      expect(wrapper._customProps).to.eql({ foo: 'yes' });
-      expect(wrapper.presenters).to.eql({ bar: 'yes' });
+      expect(container._knex).to.exist;
+      expect(container._models).to.exist;
+      expect(container._customProps).to.eql({ foo: 'yes' });
+      expect(container.presenters).to.eql({ bar: 'yes' });
 
       return doneTest();
     });
 
     it('Should have the correct properties when instantiated with no optional props', function (doneTest) {
-      var wrapper = new ModelsWrapper({
+      var container = new DomainContainer({
         knex: knex,
         models: models,
       });
 
-      expect(wrapper._knex).to.exist;
-      expect(wrapper._models).to.exist;
-      expect(wrapper._customProps).to.be.empty();
-      expect(wrapper.presenters).to.be.empty();
+      expect(container._knex).to.exist;
+      expect(container._models).to.exist;
+      expect(container._customProps).to.be.empty();
+      expect(container.presenters).to.be.empty();
 
       return doneTest();
     });
@@ -134,14 +134,14 @@ describe('ModelsWrapper', function () {
 
   describe('#query', function () {
 
-    var wrapper = new ModelsWrapper({
+    var container = new DomainContainer({
       knex: knex,
       models: models,
     });
 
     it('Should return valid QueryBuilder', function (doneTest) {
       var func = function () {
-        var builder = wrapper.query('Foo');
+        var builder = container.query('Foo');
 
         builder.where('id', 1);
       };
@@ -153,7 +153,7 @@ describe('ModelsWrapper', function () {
 
     it('Should reject if model does not exist', function (doneTest) {
       var func = function () {
-        return wrapper.query('Unexistent');
+        return container.query('Unexistent');
       };
 
       func()
@@ -189,14 +189,14 @@ describe('ModelsWrapper', function () {
         .catch(done);
     });
 
-    var wrapper = new ModelsWrapper({
+    var container = new DomainContainer({
       knex: knex,
       models: models,
     });
 
     it('Should reject if model does not exist', function (doneTest) {
       var func = function () {
-        return wrapper.create('Unexistent');
+        return container.create('Unexistent');
       };
 
       func()
@@ -210,7 +210,7 @@ describe('ModelsWrapper', function () {
 
     it('Expect throw if body argument is not passed in', function (doneTest) {
       var func = function () {
-        wrapper.create('Foo');
+        container.create('Foo');
       };
 
       expect(func).to.throwException();
@@ -219,7 +219,7 @@ describe('ModelsWrapper', function () {
     });
 
     it('Should create record with no errors', function (doneTest) {
-      wrapper.create('Foo', { one: 'yes' })
+      container.create('Foo', { one: 'yes' })
         .then(function (model) {
           expect(model).to.have.property('id');
 
@@ -256,19 +256,19 @@ describe('ModelsWrapper', function () {
         .catch(done);
     });
 
-    var wrapper = new ModelsWrapper({
+    var container = new DomainContainer({
       knex: knex,
       models: models,
     });
 
     it('Expect reject if body argument is not passed in', function (doneTest) {
-      wrapper.query('Foo')
+      container.query('Foo')
         .then(function (result) {
           expect(result).to.have.length(1);
 
           var model = new models.Foo({ id: result[0].id });
 
-          return wrapper.update(result[0]);
+          return container.update(result[0]);
         })
         .then(function () {
           expect().fail('should have rejected');
@@ -281,7 +281,7 @@ describe('ModelsWrapper', function () {
     it('Should return model after updating properly', function (doneTest) {
       var id;
 
-      wrapper.query('Foo')
+      container.query('Foo')
         .then(function (result) {
           expect(result).to.have.length(1);
 
@@ -289,7 +289,7 @@ describe('ModelsWrapper', function () {
 
           id = result[0].id;
 
-          return wrapper.update(result[0], { one: '1*1=2' });
+          return container.update(result[0], { one: '1*1=2' });
         })
         .then(function (model) {
           expect(model.id).to.equal(id);
@@ -304,7 +304,7 @@ describe('ModelsWrapper', function () {
     it('Should update model even if not full model', function (doneTest) {
       var id;
 
-      wrapper.query('Foo')
+      container.query('Foo')
         .then(function (result) {
           expect(result).to.have.length(1);
 
@@ -312,7 +312,7 @@ describe('ModelsWrapper', function () {
 
           var model = new models.Foo({ id: result[0].id });
 
-          return wrapper.update(model, { one: '1*1=2' });
+          return container.update(model, { one: '1*1=2' });
         })
         .then(function (model) {
           expect(model.id).to.equal(id);
@@ -352,17 +352,17 @@ describe('ModelsWrapper', function () {
         .catch(done);
     });
 
-    var wrapper = new ModelsWrapper({
+    var container = new DomainContainer({
       knex: knex,
       models: models,
     });
 
     it('Should return model after destroying properly', function (doneTest) {
-      wrapper.query('Foo')
+      container.query('Foo')
         .then(function (result) {
           expect(result).to.have.length(1);
 
-          return wrapper.destroy(result[0]);
+          return container.destroy(result[0]);
         })
         .then(function (model) {
           expect(model.id).to.be(null);
@@ -375,13 +375,13 @@ describe('ModelsWrapper', function () {
     });
 
     it('Should destroy model even if not full model', function (doneTest) {
-      wrapper.query('Foo')
+      container.query('Foo')
         .then(function (result) {
           expect(result).to.have.length(1);
 
           var model = new models.Foo({ id: result[0].id });
 
-          return wrapper.destroy(model);
+          return container.destroy(model);
         })
         .then(function (model) {
           expect(model.id).to.be(null);
@@ -429,13 +429,13 @@ describe('ModelsWrapper', function () {
         .catch(done);
     });
 
-    var wrapper = new ModelsWrapper({
+    var container = new DomainContainer({
       knex: knex,
       models: models,
     });
 
     it('Should return the correct record', function (doneTest) {
-      wrapper.query('Bar')
+      container.query('Bar')
         .include('foo')
         .then(function (result) {
           expect(result).to.have.length(1);

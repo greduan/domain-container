@@ -1,4 +1,4 @@
 #!/usr/bin/env sh
 
 # drop test database
-psql -c 'DROP DATABASE IF EXISTS "models-wrapper-test"'
+psql -c 'DROP DATABASE IF EXISTS "domain-container-test"'

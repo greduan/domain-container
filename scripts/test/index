@@ -4,10 +4,10 @@
 npm run test:clean
 
 # create new temporal database
-createdb models-wrapper-test
+createdb domain-container-test
 
 # create table
 node test/create-table.js
 
 # run tests
-mocha test/models-wrapper.js
+mocha test/domain-container.js

@@ -5,7 +5,7 @@ require('neon');
 var _ = require('lodash');
 var Promise = require('bluebird');
 
-var ModelsWrapper = Class({}, 'ModelsWrapper')({
+var DomainContainer = Class({}, 'DomainContainer')({
 
   prototype: {
 
@@ -44,7 +44,7 @@ var ModelsWrapper = Class({}, 'ModelsWrapper')({
       var Model = that._models[modelName];
 
       if (_.isUndefined(Model)) {
-        return Promise.reject(new Error('Model ' + modelName + ' doesn\'t exist in the ModelsWrapper'));
+        return Promise.reject(new Error('Model ' + modelName + ' doesn\'t exist in the DomainContainer'));
       }
 
       return Model.query(that._knex);
@@ -56,7 +56,7 @@ var ModelsWrapper = Class({}, 'ModelsWrapper')({
       var Model = that._models[modelName];
 
       if (_.isUndefined(Model)) {
-        return Promise.reject(new Error('Model ' + modelName + ' doesn\'t exist in the ModelsWrapper'));
+        return Promise.reject(new Error('Model ' + modelName + ' doesn\'t exist in the DomainContainer'));
       }
 
       var model = new Model(that._customProps);
@@ -96,4 +96,4 @@ var ModelsWrapper = Class({}, 'ModelsWrapper')({
 
 });
 
-module.exports = ModelsWrapper;
+module.exports = DomainContainer;

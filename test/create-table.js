@@ -3,7 +3,7 @@
 var knex = require('knex')({
   client: 'pg',
   connection: {
-    database: 'models-wrapper-test',
+    database: 'domain-container-test',
   },
 });
 

@@ -2,7 +2,7 @@
 vim: ts=2:sw=2:expandtab
 -->
 
-# Krypton ModelsWrapper Spec
+# Krypton DomainContainer Spec
 
 ## Index
 
@@ -43,8 +43,8 @@ This module means to solve that environment containment for the models and other
 things the models may need.
 
 As long as one has some sort of way to uniquely identify the different
-ModelsWrappers, e.g. a subdomain, ModelsWrapper is useful as a way to separate
-database environments.
+DomainContainer, e.g. a subdomain, DomainContainer is useful as a way to
+separate database environments.
 
 ## Constraints
 
@@ -61,10 +61,10 @@ database environments.
 - All the used Krypton methods return promises.
 - The environment it is used in will do the instantiation with its own logic
   that applies to that environment.
-- The environment knows how to store and access different ModelsWrapper
+- The environment knows how to store and access different DomainContainer
   instances.
 - The environment will implement some sort of caching mechanism, as it is not
-  cheap to be creating ModelsWrapper instances.
+  cheap to be creating DomainContainer instances.
 
 ## Blackbox
 
@@ -89,7 +89,7 @@ database environments.
 
 ## Functional spec
 
-The module will provide a Neon class called ModelsWrapper.
+The module will provide a Neon class called DomainContainer.
 
 This class, at instantiation, will take on Knex instance, an object with
 Krypton models, an optional presenters object and an optional customProps
@@ -98,7 +98,7 @@ object.
 These properties will be saved as instance variables (some with `_` prefix
 to indicate they are private).
 
-The ModelsWrapper instance will provide the following instance methods:
+The DomainContainer instance will provide the following instance methods:
 
 - `#query(modelName)` returns a Krypton model QueryBuilder from the model that
   it is being requested.
@@ -111,10 +111,10 @@ The ModelsWrapper instance will provide the following instance methods:
 
 Notes:
 
-- All of the above methods use the Knex instance provided at the ModelsWrapper's
-  instantiation for their queries.
+- All of the above methods use the Knex instance provided at the
+  DomainContainer's instantiation for their queries.
 - All of the above methods that interact with the DB directly (`#create`,
-  `#update` and `#destroy`) pass in the ModelsWrapper instance's
+  `#update` and `#destroy`) pass in the DomainContainer instance's
   `this._customProps` properties to the models so that the models may make use
   of them.
 - All of the amove methods when not being passed the model (i.e. the `#query` and
@@ -129,7 +129,7 @@ Observations:
   ``` javascript
   var model = new Model({ id: req.query.params }); `
 
-  req.wrapper.destroy(model).then(...);
+  req.container.destroy(model).then(...);
   ```
 
   And that would properly destroy the model, since before being destroyed the
@@ -138,12 +138,12 @@ Observations:
 
 ## Technical spec
 
-### Class `ModelsWrapper(<Object> initProps)`
+### Class `DomainContainer(<Object> initProps)`
 
 `<Object> initProps` available properties:
 
 - `<Knex> knex` a Knex instance which will be used in all the models' queries.
-- `<Object> models` an object with all of the models the wrapper will wrap.
+- `<Object> models` an object with all of the models the container will wrap.
   Must be model constructors, not instances.
 - `<Object> {Optional} customProps` props that will be handed to every model
   instance that will be used to modify the DB in some way (not query).
@@ -152,22 +152,22 @@ Observations:
 #### Instance variables
 
 These are mostly set by the `<Object> initProps` parameter set and
-ModelsWrapper instantiation.
+DomainContainer instantiation.
 
 ##### `_knex`
 
 Holds the Knex instance that will be provided to every model.
 
 It's set to whatever the `initProps.knex` property was when instantiating the
-ModelsWrapper.
+DomainContainer.
 
 ##### `_models`
 
-Holds all the models that will be avaialble to the ModelsWrapper.  Must be the
+Holds all the models that will be avaialble to the DomainContainer.  Must be the
 model constructors, not instances.
 
 It's set to whatever the `initProps.models` property was when instantiating the
-ModelsWrapper.
+DomainContainer.
 
 ##### `_customProps`
 
@@ -179,7 +179,7 @@ would be mailer instances which the models would use, instead of some global
 one which isn't configured for the specific models.
 
 It's set to whatever the `initProps.customProps` property was when
-instantiating the ModelsWrapper.
+instantiating the DomainContainer.
 
 ##### `presenters`
 
@@ -215,7 +215,7 @@ presenters: {
 ##### `#init(<Object> initProps)`
 
 This method is run whenever the Class is instantiated, i.e. whenever a new
-ModelsWrapper instance is created.
+DomainContainer instance is created.
 
 It should throw an error if `initProps.knex` or `initProps.models` are not
 defined or if `initProps.models` is not an object.
@@ -268,7 +268,7 @@ prototype: {
     var Model = that._models[modelName];
 
     if (_.isUndefined(Model)) {
-      return Promise.reject(new Error('Model ' + modelName + ' doesn\'t exist in the ModelsWrapper'));
+      return Promise.reject(new Error('Model ' + modelName + ' doesn\'t exist in the DomainContainer'));
     }
 
     return Model.query(that._knex);
@@ -293,7 +293,7 @@ prototype: {
     var Model = that._models[modelName];
 
     if (_.isUndefined(Model)) {
-      return Promise.reject(new Error('Model ' + modelName + ' doesn\'t exist in the ModelsWrapper'));
+      return Promise.reject(new Error('Model ' + modelName + ' doesn\'t exist in the DomainContainer'));
     }
 
     var model = new Model(that._customProps);
@@ -364,7 +364,7 @@ Let's quickly see what an instance looks like.
 Input:
 
 ``` javascript
-var wrapper = new Wrapper({
+var container = new DomainContainer({
   knex: knex, // we got this from somewhere
   models: {
     User: User, // we got this from somewhere
@@ -378,8 +378,8 @@ var wrapper = new Wrapper({
 Output:
 
 ``` javascript
-// this is an instance of ModelsWrapper
-ModelsWrapper({
+// this is an instance of DomainContainer
+DomainContainer({
   _knex: ..., // same as provided above
   _models: ..., // same as provided above
   _customProps: ..., // same as provided above, empty object default though
@@ -395,17 +395,17 @@ ModelsWrapper({
 ---
 
 ``` javascript
-var wrapper = new ModelsWrapper({...});
+var container = new DomainContainer({...});
 
-wrapper.query('User'); // => User QueryBuilder
+container.query('User'); // => User QueryBuilder
 ```
 
 ---
 
 ``` javascript
-var wrapper = new ModelsWrapper({...});
+var container = new DomainContainer({...});
 
-wrapper
+container
   .create('User', {
     email: 'example@gmail.com',
     password: 'yay',
@@ -427,11 +427,11 @@ wrapper
 ---
 
 ``` javascript
-var wrapper = new ModelsWrapper({...});
+var container = new DomainContainer({...});
 
 var model = new User({ id: 1 });
 
-wrapper
+container
   .update(model, {
     password: 'nope',
   })
@@ -452,11 +452,11 @@ wrapper
 ---
 
 ``` javascript
-var wrapper = new ModelsWrapper({...});
+var container = new DomainContainer({...});
 
 var model = new User({ id: 1 });
 
-wrapper
+container
   .destroy(model)
   .then(function () {
     // ...
@@ -470,36 +470,36 @@ wrapper
 To quickly demonstrate the use of several Knex instances:
 
 ``` javascript
-var wrapper1 = new ModelsWrapper({
+var container1 = new DomainContainer({
   ...
   knex: knex1,
   ...
 });
 
-var wrapper2 = new ModelsWrapper({
+var container2 = new DomainContainer({
   ...
   knex: knex2,
   ...
 });
 
-wrapper1.query('User')
+container1.query('User')
   .where('id', 1)
   .then(function (result) {
     console.log(result);
     // => {
     //   id: 1,
-    //   email: 'first-wrapper@example.com',
+    //   email: 'first-container@example.com',
     //   ...
     // }
   });
 
-wrapper2.query('User')
+container2.query('User')
   .where('id', 1)
   .then(function (result) {
     console.log(result);
     // => {
     //   id: 1,
-    //   email: 'second-wrapper@example.com',
+    //   email: 'second-container@example.com',
     //   ...
     // }
   });
@@ -518,7 +518,7 @@ Setup:
   models, are exactly the same.
 - There is a `domain-parser` middleware, which sets the `req.subdomainName`
   variable to `foo` or `bar` in this scenario.
-- Right after there is a `models-wrapper` middleware, which has logic
+- Right after there is a `domain-container` middleware, which has logic
   somewhat like the following:
 
   ```javascript
@@ -526,22 +526,22 @@ Setup:
 
   // Outside middleware context:
 
-  var ModelsWrapper = require('models-wrapper');
-  var wrappers = {}; // cache
+  var DomainContainer = require('domain-container');
+  var containers = {}; // cache
 
   // Inside middleware context:
 
   var name = req.subdomainName;
 
-  var newWrapper;
+  var newContainer;
 
-  if (wrappers[name]) {
-    req.wrapper = wrappers[name];
+  if (containers[name]) {
+    req.container = containers[name];
   } else {
     // skipping some logic to fetch Knex and models and stuff
-    newWrapper = new ModelsWrapper({ ... });
-    wrappers[name] = newWrapper; // cache wrapper
-    req.wrapper = wrappers[name]; // set request's wrapper
+    newContainer = new DomainContainer({ ... });
+    containers[name] = newContainer; // cache container
+    req.container = containers[name]; // set request's container
   }
 
   return next();
@@ -551,9 +551,9 @@ General flow:
 
 - A request comes in for `foo.domain.com`
 - `domain-parser` middleware sets `req.subdomainName` to `foo`
-- `models-wrapper` middleware finds no cache for a `foo` wrapper, sets
-  `req.wrapper` to a new instance of ModelsWrapper
-- Controller somewhere down the line does `req.wrapper.query('User')...`
+- `domain-container` middleware finds no cache for a `foo` container, sets
+  `req.container` to a new instance of DomainContainer
+- Controller somewhere down the line does `req.container.query('User')...`
 
 What the above effectively achieves is to have one configuration of models for
 `foo` subdomain and another for `bar` subdomain.
@@ -571,10 +571,10 @@ OK, but the models want to use the mailers, they can't do
 the mailer's instance, unless you put the mailer in the `req` and give the model
 the `req`, but we want to avoid that.
 
-So we can give the ModelsWrapper instance the mailer instances through the
+So we can give the DomainContainer instance the mailer instances through the
 `customProps` property, as `customProps.mailers` or something like that.
 
-The ModelsWrapper then will assign `customProps.mailers` to each model when it
+The DomainContainer then will assign `customProps.mailers` to each model when it
 instantiates it itself or when it's handling a model it is given, so that the
 model has the contextualized mailers available to it.
 

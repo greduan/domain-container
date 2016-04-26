@@ -1,7 +1,7 @@
 {
-  "name": "models-wrapper",
+  "name": "domain-container",
   "version": "0.0.1",
-  "description": "A wrapper around Krypton models to isolate the models' environment",
+  "description": "Tool to contain various domains (process domains), tied to the Krypton ORM",
   "main": "index.js",
   "scripts": {
     "test": "scripty",
@@ -10,20 +10,21 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/greduan/models-wrapper.git"
+    "url": "git+ssh://git@github.com/greduan/domain-container.git"
   },
   "keywords": [
     "knex",
     "neon",
     "neonode",
+    "krypton",
     "orm"
   ],
   "author": "Eduardo Lavaque <me@greduan.com> (http://greduan.com)",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/greduan/models-wrapper/issues"
+    "url": "https://github.com/greduan/domain-container/issues"
   },
-  "homepage": "https://github.com/greduan/models-wrapper#readme",
+  "homepage": "https://github.com/greduan/domain-container#readme",
   "dependencies": {
     "bluebird": "3.3.5",
     "lodash": "4.11.1",
