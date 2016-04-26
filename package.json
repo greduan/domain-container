@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "scripty",
-    "test:clean": "scripty"
+    "test:clean": "scripty",
+    "test:once": "scripty"
   },
   "repository": {
     "type": "git",
