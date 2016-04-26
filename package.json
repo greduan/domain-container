@@ -1,6 +1,6 @@
 {
   "name": "domain-container",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Tool to contain various domains (process domains), tied to the Krypton ORM",
   "main": "index.js",
   "scripts": {
