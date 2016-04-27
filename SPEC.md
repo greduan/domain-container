@@ -17,6 +17,8 @@ vim: ts=2:sw=2:expandtab
 - [Code snippets](#code-snippets)
 - [Examples](#examples)
   - [Multi-site](#multi-site)
+- [`customProps` use cases](#customprops-use-cases) 
+  - [Mailers](#mailers)
 
 ## Intro
 
