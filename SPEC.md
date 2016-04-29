@@ -67,7 +67,7 @@ separate database environments.
 ![blackbox image on imgur](https://www.lucidchart.com/publicSegments/view/44c0eae6-217a-460d-9255-57555bc03148/image.png)
 
 - `._knex` is a Knex instance passed in at instantiation.
-- `._customProps` is an object with things to pass to models before they
+- `._modelExtras` is an object with things to pass to models before they
   interact with the DB.  Examples of usage are mailer instances or other such
   things.
 - `._models` is an object containing Krypton model constructors.  The methods
@@ -78,20 +78,19 @@ separate database environments.
   (which it grabs from `._models`) passing in the `._knex` instance.
 - `#create()` is a method that creates the requested model (which it grabs from
   `._models`) with the provided body, it saves to DB using `._knex` and passes
-  to the model the `._customProps` before doing `model.save()`.
+  to the model the `._modelExtras` before doing `model.save()`.
 - `#update()` is a method that updates the provided model with the provided
   body, it saves to DB using `._knex` and passes to the model the
-  `._customProps` before doing `model.save()`.
+  `._modelExtras` before doing `model.save()`.
 - `#destroy()` is a method that destroys the provided model using `._knex`,
-  passes to the model the `._customProps` before doing `model.destroy()`.
+  passes to the model the `._modelExtras` before doing `model.destroy()`.
 
 ## Functional spec
 
 The module will provide a Neon class called DomainContainer.
 
-This class, at instantiation, will take on Knex instance, an object with
-Krypton models, an optional presenters object and an optional customProps
-object.
+This class, at instantiation, will take on Knex instance, an object with Krypton
+models, an optional presenters object and an optional modelExtras object.
 
 These properties will be saved as instance variables (some with `_` prefix
 to indicate they are private).
@@ -113,7 +112,7 @@ Notes:
   DomainContainer's instantiation for their queries.
 - All of the above methods that interact with the DB directly (`#create`,
   `#update` and `#destroy`) pass in the DomainContainer instance's
-  `this._customProps` properties to the models so that the models may make use
+  `this._modelExtras` properties to the models so that the models may make use
   of them.
 - All of the amove methods when not being passed the model (i.e. the `#query` and
   `#create` methods) they grab the model by doing something like
@@ -131,7 +130,7 @@ Observations:
   ```
 
   And that would properly destroy the model, since before being destroyed the
-  model instance is being passed in the `customProps`, so it can properly make
+  model instance is being passed in the `modelExtras`, so it can properly make
   use of those variables.
 
 ## Technical spec
@@ -143,7 +142,7 @@ Observations:
 - `<Knex> knex` a Knex instance which will be used in all the models' queries.
 - `<Object> models` an object with all of the models the container will wrap.
   Must be model constructors, not instances.
-- `<Object> {Optional} customProps` props that will be handed to every model
+- `<Object> {Optional} modelExtras` props that will be handed to every model
   instance that will be used to modify the DB in some way (not query).
 - `<Object> {Optional} props` props that can serve as metadata for the
   container, whatever you make of it.
@@ -173,7 +172,7 @@ model constructors, not instances.
 It's set to whatever the `initProps.models` property was when instantiating the
 DomainContainer.
 
-##### `_customProps`
+##### `_modelExtras`
 
 Default: Empty object (`{}`).
 
@@ -184,7 +183,7 @@ This could be anything, changes from project to project, but an easy example
 would be mailer instances which the models would use, instead of some global
 one which isn't configured for the specific models.
 
-It's set to whatever the `initProps.customProps` property was when instantiating
+It's set to whatever the `initProps.modelExtras` property was when instantiating
 the DomainContainer.
 
 ##### `props`
@@ -249,7 +248,7 @@ if initProps.models is undefined or is not an object
 else
   set this._models to be initProps.models
 
-extend this._customProps with initProps.customProps
+extend this._modelExtras with initProps.modelExtras
 extend this.props with initProps.props
 extend this.presenters with initProps.presenters
 ```
@@ -287,7 +286,7 @@ if Model is undefined
 
 make new instance of Model with the provided body
 
-assign model instance's ._customProps to be this._customProps
+assign model instance's ._modelExtras to be this._modelExtras
 
 return do model.save passing in the this._knex instance
   then
@@ -302,7 +301,7 @@ passed in through the `<Object> body` parameter.
 Pseudo-code:
 
 ```text
-assign the passed in model's ._customProps to be this._customProps
+assign the passed in model's ._modelExtras to be this._modelExtras
 
 run model.updateAttributes with body parameter passed in
 
@@ -319,7 +318,7 @@ model` parameter).
 Pseudo-code:
 
 ```text
-assign the passed in model's ._customProps to be this._customProps
+assign the passed in model's ._modelExtras to be this._modelExtras
 
 return do model.destroy passing in the this._knex instance
   then
@@ -342,7 +341,7 @@ var container = new DomainContainer({
   models: {
     User: User, // we got this from somewhere
   },
-  customProps: {
+  modelExtras: {
     mailers: mailers, // we got this from somewhere
   },
 });
@@ -355,7 +354,7 @@ Output:
 DomainContainer({
   _knex: ..., // same as provided above
   _models: ..., // same as provided above
-  _customProps: ..., // same as provided above, empty object default though
+  _modelExtras: ..., // same as provided above, empty object default though
   presenters: {}, // empty object default
   props: {}, // empty object default
 
@@ -529,7 +528,7 @@ General flow:
 What the above effectively achieves is to have one configuration of models for
 `foo` subdomain and another for `bar` subdomain.
 
-### `customProps` use cases
+### `modelExtras` use cases
 
 #### Mailers
 
@@ -543,12 +542,12 @@ the mailer's instance, unless you put the mailer in the `req` and give the model
 the `req`, but we want to avoid that.
 
 So we can give the DomainContainer instance the mailer instances through the
-`customProps` property, as `customProps.mailers` or something like that.
+`modelExtras` property, as `modelExtras.mailers` or something like that.
 
-The DomainContainer then will assign `customProps` to each model when it
+The DomainContainer then will assign `modelExtras` to each model when it
 instantiates it itself or when it's handling a model it is given, so that the
 model has the contextualized mailers available to it.
 
 The models can then use the mailers as
-`this._customProps.mailers.user.sendEmail()` and the email will be sent with the
+`this._modelExtras.mailers.user.sendEmail()` and the email will be sent with the
 proper context of the current domain.
