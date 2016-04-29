@@ -1,6 +1,7 @@
 'use strict';
 
 require('neon');
+require('krypton-orm');
 
 var _ = require('lodash');
 var Promise = require('bluebird');
@@ -87,6 +88,21 @@ var DomainContainer = Class({}, 'DomainContainer')({
         .then(function () {
           return model;
         });
+    },
+
+    get: function (modelName) {
+      var that = this;
+
+      var temp = Class({}, 'ContainerTemporaryModel').inherits(Krypton.Model)({
+        prototype: {
+          _modelExtras: that._modelExtras,
+          _container: that,
+        },
+      });
+
+      temp.knex(that._knex);
+
+      return Class({}, modelName).inherits(temp)({});
     },
 
   },

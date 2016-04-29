@@ -27,13 +27,13 @@
   "homepage": "https://github.com/greduan/domain-container#readme",
   "dependencies": {
     "bluebird": "3.3.5",
+    "krypton-orm": "0.0.14",
     "lodash": "4.11.1",
     "neon": "2.0.0"
   },
   "devDependencies": {
     "expect.js": "0.3.1",
     "knex": "0.10.0",
-    "krypton-orm": "0.0.14",
     "mocha": "2.4.5",
     "pg": "4.5.3",
     "scripty": "1.4.0"

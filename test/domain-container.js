@@ -434,6 +434,44 @@ describe('DomainContainer', function () {
 
   });
 
+  describe('#get', function () {
+
+    it('Should return a model class with the correct properties', function (doneTest) {
+      var container = new DomainContainer({
+        knex: knex,
+        models: models,
+        modelExtras: {
+          foo: 'yes',
+        },
+      });
+
+      var Model = container.get('Foo');
+
+      expect(Model.prototype).to.have.property('_modelExtras');
+      expect(Model.prototype._modelExtras).to.eql({ foo: 'yes' });
+      expect(Model.prototype).to.have.property('_container');
+
+      return doneTest();
+    });
+
+    it('Should return a model whose superClass.className is ContainerTemporaryModel', function (doneTest) {
+      var container = new DomainContainer({
+        knex: knex,
+        models: models,
+        modelExtras: {
+          foo: 'yes',
+        },
+      });
+
+      var Model = container.get('Foo');
+
+      expect(Model.superClass.className).to.equal('ContainerTemporaryModel');
+
+      return doneTest();
+    });
+
+  });
+
   describe('Relations', function () {
 
     // clean env for each test
