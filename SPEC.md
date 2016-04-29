@@ -1,8 +1,4 @@
-<!--
-vim: ts=2:sw=2:expandtab
--->
-
-# Krypton DomainContainer Spec
+# DomainContainer Spec
 
 ## Index
 
@@ -68,7 +64,7 @@ separate database environments.
 
 ## Blackbox
 
-![blackbox image on imgur](http://i.imgur.com/YVSiQYL.png)
+![blackbox image on imgur](https://www.lucidchart.com/publicSegments/view/44c0eae6-217a-460d-9255-57555bc03148/image.png)
 
 - `._knex` is a Knex instance passed in at instantiation.
 - `._customProps` is an object with things to pass to models before they
@@ -76,6 +72,8 @@ separate database environments.
   things.
 - `._models` is an object containing Krypton model constructors.  The methods
   reference this object in order to generate new models.
+- `.props` is an object containing arbitrary, static properties of the
+  DomainContainer instance.
 - `#query()` is a method that returns a QueryBuilder for the requested model
   (which it grabs from `._models`) passing in the `._knex` instance.
 - `#create()` is a method that creates the requested model (which it grabs from
@@ -127,7 +125,7 @@ Observations:
   controller (i.e. the controller does:
 
   ``` javascript
-  var model = new Model({ id: req.query.params }); `
+  var model = new Model({ id: req.query.params });
 
   req.container.destroy(model).then(...);
   ```
@@ -147,6 +145,8 @@ Observations:
   Must be model constructors, not instances.
 - `<Object> {Optional} customProps` props that will be handed to every model
   instance that will be used to modify the DB in some way (not query).
+- `<Object> {Optional} props` props that can serve as metadata for the
+  container, whatever you make of it.
 - `<Object> {Optional} presenters` presenters for models.
 
 #### Instance variables
@@ -178,8 +178,13 @@ This could be anything, changes from project to project, but an easy example
 would be mailer instances which the models would use, instead of some global
 one which isn't configured for the specific models.
 
-It's set to whatever the `initProps.customProps` property was when
-instantiating the DomainContainer.
+It's set to whatever the `initProps.customProps` property was when instantiating
+the DomainContainer.
+
+##### `props`
+
+Holds static properties about the DomainContainer, like a metadata container,
+like its ID within the system, or really whatever is useful for the use case.
 
 ##### `presenters`
 
@@ -225,6 +230,7 @@ prototype: {
   _knex: null,
   _models: null,
   _customProps: {},
+  props: {},
   presenters: {},
 
   init: function (initProps) {
@@ -242,13 +248,9 @@ prototype: {
 
     that._models = initProps.models;
 
-    if (_.isUndefined(initProps.customProps)) {
-      that._customProps = initProps.customProps;
-    }
-
-    if (_.isUndefined(initProps.presenters)) {
-      that.presenters = initProps.presenters;
-    }
+    _.extend(that._customProps, initProps.customProps);
+    _.extend(that.props, initProps.props);
+    _.extend(that.presenters, initProps.presenters);
   },
 },
 ```
@@ -296,8 +298,8 @@ prototype: {
       return Promise.reject(new Error('Model ' + modelName + ' doesn\'t exist in the DomainContainer'));
     }
 
-    var model = new Model(that._customProps);
-    model.updateAttributes(body);
+    var model = new Model(body);
+    model._customProps = that._customProps;
 
     return model.save(that._knex)
       .then(function () {
@@ -319,7 +321,7 @@ protoype: {
   update: function (model, body) {
     var that = this;
 
-    _.extend(model, that._customProps);
+    model._customProps = that._customProps;
 
     model.updateAttributes(body);
 
@@ -343,7 +345,7 @@ protoype: {
   destroy: function (model) {
     var that = this;
 
-    _.extend(model, that._customProps);
+    model._customProps = that._customProps;
 
     return model.destroy(that._knex)
       .then(function () {
@@ -384,6 +386,7 @@ DomainContainer({
   _models: ..., // same as provided above
   _customProps: ..., // same as provided above, empty object default though
   presenters: {}, // empty object default
+  props: {}, // empty object default
 
   query: function () {...},
   create: function () {...},
@@ -574,9 +577,10 @@ the `req`, but we want to avoid that.
 So we can give the DomainContainer instance the mailer instances through the
 `customProps` property, as `customProps.mailers` or something like that.
 
-The DomainContainer then will assign `customProps.mailers` to each model when it
+The DomainContainer then will assign `customProps` to each model when it
 instantiates it itself or when it's handling a model it is given, so that the
 model has the contextualized mailers available to it.
 
-The models can then use the mailers as `this.mailers.user.sendEmail()` and the
-email will be sent with the proper context of the current domain.
+The models can then use the mailers as
+`this._customProps.mailers.user.sendEmail()` and the email will be sent with the
+proper context of the current domain.
