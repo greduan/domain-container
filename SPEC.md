@@ -64,7 +64,7 @@ separate database environments.
 
 ## Blackbox
 
-![blackbox image on imgur](https://www.lucidchart.com/publicSegments/view/44c0eae6-217a-460d-9255-57555bc03148/image.png)
+![blackbox image on imgur](https://www.lucidchart.com/publicSegments/view/b6b095bb-17e7-4b44-9143-b5e775b5a58e/image.png)
 
 - `._knex` is a Knex instance passed in at instantiation.
 - `._modelExtras` is an object with things to pass to models before they
@@ -84,6 +84,9 @@ separate database environments.
   `._modelExtras` before doing `model.save()`.
 - `#destroy()` is a method that destroys the provided model using `._knex`,
   passes to the model the `._modelExtras` before doing `model.destroy()`.
+- `#get()` is a method that returns a model class (which it grabs from
+  `._models` after assigning to it a Knex instance and the
+  `._modelExtras`.  Useful for class methods.
 
 ## Functional spec
 
@@ -105,6 +108,8 @@ The DomainContainer instance will provide the following instance methods:
   model and saves the changes to the DB.
 - `#destroy(modelInstance)` calls `.destroy()` on the provided model, destroying
   the record in the DB.
+- `#get(modelName)` returns a model class that has had a Knex and the
+  `modelExtras` applied to it, useful for class methods.
 
 Notes:
 
@@ -113,7 +118,7 @@ Notes:
 - All of the above methods that interact with the DB directly (`#create`,
   `#update` and `#destroy`) pass in the DomainContainer instance's
   `this._modelExtras` properties to the models so that the models may make use
-  of them.
+  of them.  Also `#get`.
 - All of the amove methods when not being passed the model (i.e. the `#query` and
   `#create` methods) they grab the model by doing something like
   `this._models[modelName]`.
@@ -325,11 +330,27 @@ return do model.destroy passing in the this._knex instance
     return model instance
 ```
 
+##### `#get(<String> modelName)`
+
+This method returns a model class (which it grabs from `._models`
+according ot the `<String> modelName>` parameter, after assigning to
+it a Knex instance and the `._modelExtras`.
+
+Designed mainly so one may make use of class methods in the models.
+
+Pseudo-code:
+
+```text
+create temp base class which inherits from Krypton.Model
+
+call knex on temporary base class passing in this._knex
+
+let temp base class' ._modelExtras be this._modelExtras
+
+return class that inherits from the temp base class and from this._models[modelName]
+```
+
 ## Code snippets
-
-Here we'll just do some basic blackbox examples to give an idea of behaviour.
-
----
 
 Let's quickly see what an instance looks like.
 
@@ -362,6 +383,7 @@ DomainContainer({
   create: function () {...},
   update: function () {...},
   destroy: function () {...},
+  get: function () {...},
 });
 ```
 
@@ -476,6 +498,14 @@ container2.query('User')
     //   ...
     // }
   });
+```
+
+---
+
+```javascript
+var container = new DomainContainer({...});
+
+container.get('User'); // => User model with ._knex and ._modelExtras set
 ```
 
 ## Examples
