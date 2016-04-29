@@ -56,8 +56,8 @@ var DomainContainer = Class({}, 'DomainContainer')({
         return Promise.reject(new Error('Model ' + modelName + ' doesn\'t exist in the DomainContainer'));
       }
 
-      var model = new Model(that._modelExtras);
-      model.updateAttributes(body);
+      var model = new Model(body);
+      model._modelExtras = that._modelExtras;
 
       return model.save(that._knex)
         .then(function () {
@@ -68,9 +68,9 @@ var DomainContainer = Class({}, 'DomainContainer')({
     update: function (model, body) {
       var that = this;
 
-      _.extend(model, that._modelExtras);
-
       model.updateAttributes(body);
+
+      model._modelExtras = that._modelExtras;
 
       return model.save(that._knex)
         .then(function () {
@@ -81,7 +81,7 @@ var DomainContainer = Class({}, 'DomainContainer')({
     destroy: function (model) {
       var that = this;
 
-      _.extend(model, that._modelExtras);
+      model._modelExtras = that._modelExtras;
 
       return model.destroy(that._knex)
         .then(function () {
