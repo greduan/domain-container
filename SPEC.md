@@ -122,6 +122,9 @@ Notes:
 - All of the amove methods when not being passed the model (i.e. the `#query` and
   `#create` methods) they grab the model by doing something like
   `this._models[modelName]`.
+- Most of the above methods (`#create`, `#update`, `#destroy` and
+  `#get`) add a `._container` variable to the model so the model can
+  make use of it internally and create models in context easily.
 
 Observations:
 
@@ -291,7 +294,8 @@ if Model is undefined
 
 make new instance of Model with the provided body
 
-assign model instance's ._modelExtras to be this._modelExtras
+let model instance's ._modelExtras be this._modelExtras
+let model instance's ._container point to this
 
 return do model.save passing in the this._knex instance
   then
@@ -306,7 +310,8 @@ passed in through the `<Object> body` parameter.
 Pseudo-code:
 
 ```text
-assign the passed in model's ._modelExtras to be this._modelExtras
+let passed in model's ._modelExtras to be this._modelExtras
+let passed in model's ._container point to this
 
 run model.updateAttributes with body parameter passed in
 
@@ -323,7 +328,8 @@ model` parameter).
 Pseudo-code:
 
 ```text
-assign the passed in model's ._modelExtras to be this._modelExtras
+let passed in model's ._modelExtras to be this._modelExtras
+let passed in model's ._container point to this
 
 return do model.destroy passing in the this._knex instance
   then
@@ -346,6 +352,7 @@ create temp base class which inherits from Krypton.Model
 call knex on temporary base class passing in this._knex
 
 let temp base class' ._modelExtras be this._modelExtras
+let temp base class' ._container point to this
 
 return class that inherits from the temp base class and from this._models[modelName]
 ```
@@ -506,6 +513,29 @@ container2.query('User')
 var container = new DomainContainer({...});
 
 container.get('User'); // => User model with ._knex and ._modelExtras set
+```
+
+---
+
+Model making use of `._container`.
+
+```javascript
+var Model = Class({}, 'Model').inherits(Krypton.Model)({
+  prototype: {
+    init: function (config) {
+      var that = this;
+
+      that.on('beforeCreate', function (next) {
+        that._container
+          .create('Model2', { some: 'value' })
+          .then(function (model) {
+            return next();
+          })
+          .catch(next);
+      });
+    },
+  },
+});
 ```
 
 ## Examples
