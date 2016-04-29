@@ -111,16 +111,16 @@ describe('DomainContainer', function () {
         },
       });
 
-      expect(container._knex).to.exist;
-      expect(container._models).to.exist;
+      expect(container).to.have.property('_knex');
+      expect(container).to.have.property('_models');
 
-      expect(container._modelExtras).to.exist;
+      expect(container).to.have.property('_modelExtras');
       expect(container._modelExtras).to.eql({ foo: 'yes' });
 
-      expect(container.props).to.exist;
+      expect(container).to.have.property('props');
       expect(container.props).to.eql({ man: 'yes' });
 
-      expect(container.presenters).to.exist;
+      expect(container).to.have.property('presenters');
       expect(container.presenters).to.eql({ bar: 'yes' });
 
       return doneTest();
@@ -132,16 +132,16 @@ describe('DomainContainer', function () {
         models: models,
       });
 
-      expect(container._knex).to.exist;
-      expect(container._models).to.exist;
+      expect(container).to.have.property('_knex');
+      expect(container).to.have.property('_models');
 
-      expect(container._modelExtras).to.exist;
+      expect(container).to.have.property('_modelExtras');
       expect(container._modelExtras).to.be.empty();
 
-      expect(container.props).to.exist;
+      expect(container).to.have.property('props');
       expect(container.props).to.be.empty();
 
-      expect(container.presenters).to.exist;
+      expect(container).to.have.property('presenters');
       expect(container.presenters).to.be.empty();
 
       return doneTest();
@@ -225,17 +225,17 @@ describe('DomainContainer', function () {
         });
     });
 
-    it('Expect throw if body argument is not passed in', function (doneTest) {
-      var func = function () {
-        container.create('Foo');
-      };
+    it('Should create record with no errors', function (doneTest) {
+      container.create('Foo', { one: 'yes' })
+        .then(function (model) {
+          expect(model).to.have.property('id');
 
-      expect(func).to.throwException();
-
-      return doneTest();
+          return doneTest();
+        })
+        .catch(doneTest);
     });
 
-    it('Should create record with no errors', function (doneTest) {
+    it('Should give ._modelExtras to created model', function (doneTest) {
       container.create('Foo', { one: 'yes' })
         .then(function (model) {
           expect(model).to.have.property('id');
@@ -276,23 +276,6 @@ describe('DomainContainer', function () {
     var container = new DomainContainer({
       knex: knex,
       models: models,
-    });
-
-    it('Expect reject if body argument is not passed in', function (doneTest) {
-      container.query('Foo')
-        .then(function (result) {
-          expect(result).to.have.length(1);
-
-          var model = new models.Foo({ id: result[0].id });
-
-          return container.update(result[0]);
-        })
-        .then(function () {
-          expect().fail('should have rejected');
-        })
-        .catch(function (err) {
-          return doneTest();
-        });
     });
 
     it('Should return model after updating properly', function (doneTest) {
