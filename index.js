@@ -11,8 +11,9 @@ var DomainContainer = Class({}, 'DomainContainer')({
 
     _knex: null,
     _models: null,
-    _customProps: {},
-    presenters: {},
+    _modelExtras: null,
+    presenters: null,
+    props: null,
 
     init: function (initProps) {
       var that = this;
@@ -29,13 +30,9 @@ var DomainContainer = Class({}, 'DomainContainer')({
 
       that._models = initProps.models;
 
-      if (!_.isUndefined(initProps.customProps)) {
-        that._customProps = initProps.customProps;
-      }
-
-      if (!_.isUndefined(initProps.presenters)) {
-        that.presenters = initProps.presenters;
-      }
+      that._modelExtras = initProps.modelExtras || {};
+      that.presenters = initProps.presenters || {};
+      that.props = initProps.props || {};
     },
 
     query: function (modelName) {
@@ -59,7 +56,7 @@ var DomainContainer = Class({}, 'DomainContainer')({
         return Promise.reject(new Error('Model ' + modelName + ' doesn\'t exist in the DomainContainer'));
       }
 
-      var model = new Model(that._customProps);
+      var model = new Model(that._modelExtras);
       model.updateAttributes(body);
 
       return model.save(that._knex)
@@ -71,7 +68,7 @@ var DomainContainer = Class({}, 'DomainContainer')({
     update: function (model, body) {
       var that = this;
 
-      _.extend(model, that._customProps);
+      _.extend(model, that._modelExtras);
 
       model.updateAttributes(body);
 
@@ -84,7 +81,7 @@ var DomainContainer = Class({}, 'DomainContainer')({
     destroy: function (model) {
       var that = this;
 
-      _.extend(model, that._customProps);
+      _.extend(model, that._modelExtras);
 
       return model.destroy(that._knex)
         .then(function () {

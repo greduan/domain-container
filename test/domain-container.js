@@ -49,7 +49,7 @@ describe('DomainContainer', function () {
         var container = new DomainContainer({
           knex: knex,
           models: models,
-          customProps: {},
+          modelExtras: {},
           presenters: {},
         });
       };
@@ -100,17 +100,27 @@ describe('DomainContainer', function () {
       var container = new DomainContainer({
         knex: knex,
         models: models,
-        customProps: {
+        modelExtras: {
           foo: 'yes',
         },
         presenters: {
           bar: 'yes',
         },
+        props: {
+          man: 'yes',
+        },
       });
 
       expect(container._knex).to.exist;
       expect(container._models).to.exist;
-      expect(container._customProps).to.eql({ foo: 'yes' });
+
+      expect(container._modelExtras).to.exist;
+      expect(container._modelExtras).to.eql({ foo: 'yes' });
+
+      expect(container.props).to.exist;
+      expect(container.props).to.eql({ man: 'yes' });
+
+      expect(container.presenters).to.exist;
       expect(container.presenters).to.eql({ bar: 'yes' });
 
       return doneTest();
@@ -124,7 +134,14 @@ describe('DomainContainer', function () {
 
       expect(container._knex).to.exist;
       expect(container._models).to.exist;
-      expect(container._customProps).to.be.empty();
+
+      expect(container._modelExtras).to.exist;
+      expect(container._modelExtras).to.be.empty();
+
+      expect(container.props).to.exist;
+      expect(container.props).to.be.empty();
+
+      expect(container.presenters).to.exist;
       expect(container.presenters).to.be.empty();
 
       return doneTest();
