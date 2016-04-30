@@ -96,16 +96,27 @@ var DomainContainer = Class({}, 'DomainContainer')({
     get: function (modelName) {
       var that = this;
 
-      var temp = Class({}, 'ContainerTemporaryModel').inherits(Krypton.Model)({
+      var Model = that._models[modelName];
+
+      if (_.isUndefined(Model)) {
+        return Promise.reject(new Error('Model ' + modelName + ' doesn\'t exist in the DomainContainer'));
+      }
+
+      var tempMod = Module({}, 'ContainerTemporaryModule')({
         prototype: {
           _modelExtras: that._modelExtras,
           _container: that,
         },
       });
 
-      temp.knex(that._knex);
+      var tmpModel = Class({}, modelName)
+        .inherits(Model)
+        .includes(tempMod)
+        ({});
 
-      return Class({}, modelName).inherits(temp)({});
+      tmpModel.knex(that._knex);
+
+      return tmpModel;
     },
 
   },

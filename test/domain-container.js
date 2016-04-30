@@ -439,6 +439,35 @@ describe('DomainContainer', function () {
 
   describe('#get', function () {
 
+    // clean it all up
+    after(function (done) {
+      knex('foo')
+        .delete()
+        .then(function () {
+          return done();
+        })
+        .catch(done);
+    });
+
+    it('Should reject if model does not exist', function (doneTest) {
+      var container = new DomainContainer({
+        knex: knex,
+        models: models,
+      });
+
+      var func = function () {
+        return container.get('Unexistent');
+      };
+
+      func()
+        .then(function () {
+          expect().fail('should have rejected');
+        })
+        .catch(function (err) {
+          return doneTest();
+        });
+    });
+
     it('Should return a model class with the correct properties', function (doneTest) {
       var container = new DomainContainer({
         knex: knex,
@@ -457,20 +486,27 @@ describe('DomainContainer', function () {
       return doneTest();
     });
 
-    it('Should return a model whose superClass.className is ContainerTemporaryModel', function (doneTest) {
+    it('Should return a model that works', function (doneTest) {
       var container = new DomainContainer({
         knex: knex,
         models: models,
-        modelExtras: {
-          foo: 'yes',
-        },
       });
 
       var Model = container.get('Foo');
 
-      expect(Model.superClass.className).to.equal('ContainerTemporaryModel');
+      var model = new Model({
+        one: 'ichi',
+      });
 
-      return doneTest();
+      model.save()
+        .then(function () {
+          expect(model).to.have.property('id');
+          expect(model).to.have.property('one');
+          expect(model.one).to.equal('ichi');
+
+          return doneTest();
+        })
+        .catch(doneTest);
     });
 
   });
