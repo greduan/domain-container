@@ -13,7 +13,7 @@
 - [Code snippets](#code-snippets)
 - [Examples](#examples)
   - [Multi-site](#multi-site)
-- [`customProps` use cases](#customprops-use-cases) 
+- [`customProps` use cases](#customprops-use-cases)
   - [Mailers](#mailers)
 
 ## Intro
@@ -349,6 +349,11 @@ Designed mainly so one may make use of class methods in the models.
 Pseudo-code:
 
 ```text
+let Model be that._models[modelName] // for convenience
+
+if Model is undefined
+  return rejected promise with error 'Model '+modelName+' doesn\'t exist in the DomainContainer'
+
 create temp base class which inherits from Krypton.Model
 
 call knex on temporary base class passing in this._knex
