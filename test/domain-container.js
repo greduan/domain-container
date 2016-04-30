@@ -235,11 +235,12 @@ describe('DomainContainer', function () {
         .catch(doneTest);
     });
 
-    it('Should set ._modelExtras in created model', function (doneTest) {
+    it('Should set ._modelExtras and ._container in created model', function (doneTest) {
       container.create('Foo', { one: 'yes' })
         .then(function (model) {
           expect(model).to.have.property('id');
           expect(model).to.have.property('_modelExtras');
+          expect(model).to.have.property('_container');
 
           return doneTest();
         })
@@ -325,7 +326,7 @@ describe('DomainContainer', function () {
         .catch(doneTest);
     });
 
-    it('Should set ._modelExtras in updated model', function (doneTest) {
+    it('Should set ._modelExtras and ._container in updated model', function (doneTest) {
       var id;
 
       container.query('Foo')
@@ -341,6 +342,7 @@ describe('DomainContainer', function () {
         .then(function (model) {
           expect(model.id).to.equal(id);
           expect(model).to.have.property('_modelExtras');
+          expect(model).to.have.property('_container');
 
           return doneTest();
         })
@@ -416,7 +418,7 @@ describe('DomainContainer', function () {
         .catch(doneTest);
     });
 
-    it('Should set ._modelExtras in destroyed model', function (doneTest) {
+    it('Should set ._modelExtras and ._container in destroyed model', function (doneTest) {
       container.query('Foo')
         .then(function (result) {
           expect(result).to.have.length(1);
@@ -426,6 +428,7 @@ describe('DomainContainer', function () {
         .then(function (model) {
           expect(model.id).to.be(null);
           expect(model).to.have.property('_modelExtras');
+          expect(model).to.have.property('_container');
 
           return doneTest();
         })
