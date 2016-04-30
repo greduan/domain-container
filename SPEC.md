@@ -354,14 +354,13 @@ let Model be that._models[modelName] // for convenience
 if Model is undefined
   return rejected promise with error 'Model '+modelName+' doesn\'t exist in the DomainContainer'
 
-create temp base class which inherits from Krypton.Model
+create temp module which has _modelExtras and _container in prototype
 
-call knex on temporary base class passing in this._knex
+create temp class which inherits from Model and includes temp module
 
-let temp base class' ._modelExtras be this._modelExtras
-let temp base class' ._container point to this
+call knex on temp class passing in this._knex
 
-return class that inherits from the temp base class and from this._models[modelName]
+return temp class
 ```
 
 ## Code snippets
