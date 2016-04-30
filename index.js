@@ -59,6 +59,7 @@ var DomainContainer = Class({}, 'DomainContainer')({
 
       var model = new Model(body);
       model._modelExtras = that._modelExtras;
+      model._container = that;
 
       return model.save(that._knex)
         .then(function () {
@@ -72,6 +73,7 @@ var DomainContainer = Class({}, 'DomainContainer')({
       model.updateAttributes(body);
 
       model._modelExtras = that._modelExtras;
+      model._container = that;
 
       return model.save(that._knex)
         .then(function () {
@@ -83,6 +85,7 @@ var DomainContainer = Class({}, 'DomainContainer')({
       var that = this;
 
       model._modelExtras = that._modelExtras;
+      model._container = that;
 
       return model.destroy(that._knex)
         .then(function () {
