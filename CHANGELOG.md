@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.  This
 project adheres to [Semantic Versioning](http://semver.org/).
 
+## [2.3.0] - 2016-05-03
+
+It's all in the SPEC.md file.
+
+### Changed
+
+- Method `#update` now takes the second parameter (`body`) as optional, so you
+  can use `#update` just to save the model to DB.
+
 ## [2.2.0] - 2016-04-29
 
 It's all in the SPEC.md file.
@@ -40,6 +49,7 @@ It's all in the SPEC.md file.
 
 Initial release.  It's all in the SPEC.md file.
 
+[2.3.0]: https://github.com/greduan/domain-container/tree/6b4cbfc1cb0f5b841759197270304e35fa1ec20e
 [2.2.0]: https://github.com/greduan/domain-container/tree/2119cd6652c6df034837a0e980b030d35ded81e8
 [2.1.0]: https://github.com/greduan/domain-container/tree/6cd8fbb020b24bd86a4f6df192ab1814b0de544c
 [2.0.0]: https://github.com/greduan/domain-container/tree/83fde0835c8db9d2cdcbae07defdb8e0a7e5dbdd
