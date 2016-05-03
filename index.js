@@ -70,7 +70,7 @@ var DomainContainer = Class({}, 'DomainContainer')({
     update: function (model, body) {
       var that = this;
 
-      model.updateAttributes(body);
+      model.updateAttributes(body || {});
 
       model._modelExtras = that._modelExtras;
       model._container = that;

@@ -349,6 +349,30 @@ describe('DomainContainer', function () {
         .catch(doneTest);
     });
 
+    it('Should just save model if not provided body parameter', function (doneTest) {
+      var id;
+
+      container.query('Foo')
+        .then(function (result) {
+          expect(result).to.have.length(1);
+
+          var model = new models.Foo({ id: result[0].id });
+
+          id = result[0].id;
+          result[0].one = '1*1=2';
+
+          return container.update(result[0]);
+        })
+        .then(function (model) {
+          expect(model.id).to.equal(id);
+          expect(model.one).to.equal('1*1=2');
+          expect(model.two).to.equal('2');
+
+          return doneTest();
+        })
+        .catch(doneTest);
+    });
+
   });
 
   describe('#destroy', function () {
