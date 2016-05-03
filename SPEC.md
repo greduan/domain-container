@@ -315,6 +315,7 @@ Pseudo-code:
 let passed in model's ._modelExtras to be this._modelExtras
 let passed in model's ._container point to this
 
+let body be an empty object by default
 run model.updateAttributes with body parameter passed in
 
 return do model.save passing in the this._knex instance
