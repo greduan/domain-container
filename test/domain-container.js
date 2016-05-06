@@ -535,6 +535,57 @@ describe('DomainContainer', function () {
 
   });
 
+  describe('#cleanup', function () {
+
+    it('Should not throw when called', function (doneTest) {
+      var knex = require('knex')({
+        client: 'pg',
+        connection: {
+          database: 'domain-container-test',
+        },
+      });
+
+      var container = new DomainContainer({
+        knex: knex,
+        models: models,
+      });
+
+      container.cleanup()
+        .then(function () {
+          return doneTest();
+        })
+        .catch(doneTest);
+    });
+
+    it('#query should not work after #cleanup', function (doneTest) {
+      var knex = require('knex')({
+        client: 'pg',
+        connection: {
+          database: 'domain-container-test',
+        },
+      });
+
+      var container = new DomainContainer({
+        knex: knex,
+        models: models,
+      });
+
+      container.cleanup()
+        .then(function () {
+          return container.create('Foo', { one: '1' });
+        })
+        .then(function () {
+          expect().fail('should have rejected');
+        })
+        .catch(function (err) {
+          expect(err).to.match(/no pool/);
+
+          return doneTest();
+        });
+    });
+
+  });
+
   describe('Relations', function () {
 
     // clean env for each test
