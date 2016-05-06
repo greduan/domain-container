@@ -119,6 +119,16 @@ var DomainContainer = Class({}, 'DomainContainer')({
       return tmpModel;
     },
 
+    cleanup: function () {
+      var that = this;
+
+      return new Promise(function (resolve, reject) {
+        that._knex.destroy(function () {
+          resolve();
+        });
+      });
+    },
+
   },
 
 });
