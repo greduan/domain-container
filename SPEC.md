@@ -66,7 +66,7 @@ separate database environments.
 
 ## Blackbox
 
-![blackbox image on imgur](https://www.lucidchart.com/publicSegments/view/b6b095bb-17e7-4b44-9143-b5e775b5a58e/image.png)
+![blackbox image on imgur](https://www.lucidchart.com/publicSegments/view/41711772-da29-4522-a9c0-728c4ce242de/image.png)
 
 - `._knex` is a Knex instance passed in at instantiation.
 - `._modelExtras` is an object with things to pass to models before they
@@ -89,6 +89,7 @@ separate database environments.
 - `#get()` is a method that returns a model class (which it grabs from
   `._models` after assigning to it a Knex instance and the
   `._modelExtras`.  Useful for class methods.
+- `#cleanup()`, destroys the Knex instance.
 
 ## Functional spec
 
@@ -112,6 +113,7 @@ The DomainContainer instance will provide the following instance methods:
   the record in the DB.
 - `#get(modelName)` returns a model class that has had a Knex and the
   `modelExtras` applied to it, useful for class methods.
+- `#cleanup()` destroys Knex instance.
 
 Notes:
 
@@ -364,6 +366,20 @@ call knex on temp class passing in this._knex
 return temp class
 ```
 
+##### `#cleanup()`
+
+This method returns a promise.  It simply runs `.destroy()` on the
+Knex instance and it overrides all the methods with a method that
+throws upon usage, so the DomainContainer can't be called anew.
+
+Pseudo-code:
+
+```text
+run this._knex.destroy()
+
+on the .destroy() callback/resolved promise return a resolved promise
+```
+
 ## Code snippets
 
 Let's quickly see what an instance looks like.
@@ -543,6 +559,12 @@ var Model = Class({}, 'Model').inherits(Krypton.Model)({
     },
   },
 });
+```
+
+```javascript
+var container = new DomainContainer({...});
+
+container.cleanup(); // => Promise
 ```
 
 ## Examples
