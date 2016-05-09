@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.  This
 project adheres to [Semantic Versioning](http://semver.org/).
 
+## [2.4.0] - 2016-05-09
+
+It's all in the SPEC.md file.
+
+### Added
+
+- Added `#cleanup` method, which just destroys the Knex version.
+
 ## [2.3.0] - 2016-05-03
 
 It's all in the SPEC.md file.
@@ -49,6 +57,7 @@ It's all in the SPEC.md file.
 
 Initial release.  It's all in the SPEC.md file.
 
+[2.4.0]: https://github.com/greduan/domain-container/tree/f9bb3cfd9ecdfa928380c7070bcc46cf59af30cc
 [2.3.0]: https://github.com/greduan/domain-container/tree/6b4cbfc1cb0f5b841759197270304e35fa1ec20e
 [2.2.0]: https://github.com/greduan/domain-container/tree/2119cd6652c6df034837a0e980b030d35ded81e8
 [2.1.0]: https://github.com/greduan/domain-container/tree/6cd8fbb020b24bd86a4f6df192ab1814b0de544c
