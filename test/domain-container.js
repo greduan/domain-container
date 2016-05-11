@@ -506,6 +506,7 @@ describe('DomainContainer', function () {
       expect(Model.prototype).to.have.property('_modelExtras');
       expect(Model.prototype._modelExtras).to.eql({ foo: 'yes' });
       expect(Model.prototype).to.have.property('_container');
+      expect(Model).to.have.property('_knex');
 
       return doneTest();
     });

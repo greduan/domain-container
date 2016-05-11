@@ -102,7 +102,7 @@ var DomainContainer = Class({}, 'DomainContainer')({
         return Promise.reject(new Error('Model ' + modelName + ' doesn\'t exist in the DomainContainer'));
       }
 
-      var tempMod = Module({}, 'ContainerTemporaryModule')({
+      var tmpMod = Module({}, 'ContainerTemporaryModule')({
         prototype: {
           _modelExtras: that._modelExtras,
           _container: that,
@@ -111,7 +111,7 @@ var DomainContainer = Class({}, 'DomainContainer')({
 
       var tmpModel = Class({}, modelName)
         .inherits(Model)
-        .includes(tempMod)
+        .includes(tmpMod)
         ({});
 
       tmpModel.knex(that._knex);
