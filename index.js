@@ -103,9 +103,13 @@ var DomainContainer = Class({}, 'DomainContainer')({
       }
 
       var tmpMod = Module({}, 'ContainerTemporaryModule')({
+        _modelExtras: that._modelExtras,
+        _container: that,
+
         prototype: {
           _modelExtras: that._modelExtras,
           _container: that,
+          _knex: that._knex,
         },
       });
 
