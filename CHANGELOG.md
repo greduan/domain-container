@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.  This
 project adheres to [Semantic Versioning](http://semver.org/).
 
+## [2.5.0] - 2016-05-12
+
+It's all in the SPEC.md file.
+
+### Added
+
+- `#get`
+  - Returned Class now has as static properties:
+    - `_container`
+    - `_modelExtras`
+  - Returned Class now has in prototype, in addition to the previously
+    available ones, the following:
+    - `_knex`
+
 ## [2.4.0] - 2016-05-09
 
 It's all in the SPEC.md file.
@@ -57,6 +71,7 @@ It's all in the SPEC.md file.
 
 Initial release.  It's all in the SPEC.md file.
 
+[2.5.0]: https://github.com/greduan/domain-container/tree/c73420f4520c2d0d1eedf8c8298779be9a079a6b
 [2.4.0]: https://github.com/greduan/domain-container/tree/f9bb3cfd9ecdfa928380c7070bcc46cf59af30cc
 [2.3.0]: https://github.com/greduan/domain-container/tree/6b4cbfc1cb0f5b841759197270304e35fa1ec20e
 [2.2.0]: https://github.com/greduan/domain-container/tree/2119cd6652c6df034837a0e980b030d35ded81e8
