@@ -357,7 +357,13 @@ let Model be that._models[modelName] // for convenience
 if Model is undefined
   return rejected promise with error 'Model '+modelName+' doesn\'t exist in the DomainContainer'
 
-create temp module which has _modelExtras and _container in prototype
+create temp module which has in prototype
+  _modelExtras
+  _container
+  _knex
+and as class static properties
+  _modelExtras
+  _container
 
 create temp class which inherits from Model and includes temp module
 
