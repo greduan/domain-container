@@ -503,10 +503,17 @@ describe('DomainContainer', function () {
 
       var Model = container.get('Foo');
 
+      // instance props
       expect(Model.prototype).to.have.property('_modelExtras');
       expect(Model.prototype._modelExtras).to.eql({ foo: 'yes' });
       expect(Model.prototype).to.have.property('_container');
+      expect(Model.prototype).to.have.property('_knex');
+
+      // class props
       expect(Model).to.have.property('_knex');
+      expect(Model).to.have.property('_modelExtras');
+      expect(Model._modelExtras).to.eql({ foo: 'yes' });
+      expect(Model).to.have.property('_container');
 
       return doneTest();
     });
