@@ -1,10 +1,40 @@
 'use strict';
 
-require('neon');
-require('krypton-orm');
+if (global.Class == null || global.Module == null) {
+  require('neon');
+}
+
+if (global.Krypton == null) {
+  require('krypton-orm');
+}
 
 var _ = require('lodash');
 var Promise = require('bluebird');
+
+var generateContainerModels = function (models, container) {
+  var result = {};
+
+  Object.keys(models).forEach(function (key) {
+    var Model = models[key];
+
+    var TmpModel = Class({}, key)
+      .inherits(Model)({
+        _modelExtras: container._modelExtras,
+        _container: container,
+
+        prototype: {
+          _modelExtras: container._modelExtras,
+          _container: container,
+        },
+      });
+
+    TmpModel.knex(container._knex);
+
+    result[key] = TmpModel;
+  });
+
+  return result;
+};
 
 var DomainContainer = Class({}, 'DomainContainer')({
 
@@ -25,15 +55,15 @@ var DomainContainer = Class({}, 'DomainContainer')({
 
       that._knex = initProps.knex;
 
+      that._modelExtras = initProps.modelExtras || {};
+      that.presenters = initProps.presenters || {};
+      that.props = initProps.props || {};
+
       if (_.isUndefined(initProps.models) || !_.isObject(initProps.models)) {
         throw new Error('initProps.models property is required and should be an object');
       }
 
-      that._models = initProps.models;
-
-      that._modelExtras = initProps.modelExtras || {};
-      that.presenters = initProps.presenters || {};
-      that.props = initProps.props || {};
+      that._models = generateContainerModels(initProps.models, that);
     },
 
     query: function (modelName) {
@@ -61,7 +91,7 @@ var DomainContainer = Class({}, 'DomainContainer')({
       model._modelExtras = that._modelExtras;
       model._container = that;
 
-      return model.save(that._knex)
+      return model.save()
         .then(function () {
           return model;
         });
@@ -75,7 +105,7 @@ var DomainContainer = Class({}, 'DomainContainer')({
       model._modelExtras = that._modelExtras;
       model._container = that;
 
-      return model.save(that._knex)
+      return model.save()
         .then(function () {
           return model;
         });
@@ -102,25 +132,7 @@ var DomainContainer = Class({}, 'DomainContainer')({
         return Promise.reject(new Error('Model ' + modelName + ' doesn\'t exist in the DomainContainer'));
       }
 
-      var tmpMod = Module({}, 'ContainerTemporaryModule')({
-        _modelExtras: that._modelExtras,
-        _container: that,
-
-        prototype: {
-          _modelExtras: that._modelExtras,
-          _container: that,
-          _knex: that._knex,
-        },
-      });
-
-      var tmpModel = Class({}, modelName)
-        .inherits(Model)
-        .includes(tmpMod)
-        ({});
-
-      tmpModel.knex(that._knex);
-
-      return tmpModel;
+      return Model;
     },
 
     cleanup: function () {
