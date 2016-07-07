@@ -132,7 +132,7 @@ describe('DomainContainer', function () {
         models: models,
       });
 
-      expect(container).to.have.property('_knex');
+      expect(container).to.have.property('_knex'); // previously was included but no longer
       expect(container).to.have.property('_models');
 
       expect(container).to.have.property('_modelExtras');
@@ -145,6 +145,30 @@ describe('DomainContainer', function () {
       expect(container.presenters).to.be.empty();
 
       return doneTest();
+    });
+
+    it('Should instantiate new models that have the container\'s properties', function () {
+      var container = new DomainContainer({
+        knex: knex,
+        models: models,
+        modelExtras: {
+          foo: 'yes',
+        },
+      });
+
+      var Model = container._models.Foo;
+
+      // instance props
+      expect(Model.prototype).to.have.property('_modelExtras');
+      expect(Model.prototype._modelExtras).to.eql({ foo: 'yes' });
+      expect(Model.prototype).to.have.property('_container');
+      expect(Model.prototype).to.not.have.property('_knex');
+
+      // class props
+      expect(Model).to.have.property('_knex');
+      expect(Model).to.have.property('_modelExtras');
+      expect(Model._modelExtras).to.eql({ foo: 'yes' });
+      expect(Model).to.have.property('_container');
     });
 
   });
@@ -507,7 +531,7 @@ describe('DomainContainer', function () {
       expect(Model.prototype).to.have.property('_modelExtras');
       expect(Model.prototype._modelExtras).to.eql({ foo: 'yes' });
       expect(Model.prototype).to.have.property('_container');
-      expect(Model.prototype).to.have.property('_knex');
+      expect(Model.prototype).to.not.have.property('_knex'); // previously it was expected but no longer
 
       // class props
       expect(Model).to.have.property('_knex');

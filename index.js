@@ -105,7 +105,7 @@ var DomainContainer = Class({}, 'DomainContainer')({
       model._modelExtras = that._modelExtras;
       model._container = that;
 
-      return model.save()
+      return model.save(that._knex)
         .then(function () {
           return model;
         });
