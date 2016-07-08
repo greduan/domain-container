@@ -66,7 +66,7 @@ separate database environments.
 
 ## Blackbox
 
-![blackbox image on imgur](https://www.lucidchart.com/publicSegments/view/41711772-da29-4522-a9c0-728c4ce242de/image.png)
+![blackbox image](https://www.lucidchart.com/publicSegments/view/41711772-da29-4522-a9c0-728c4ce242de/image.png)
 
 - `._knex` is a Knex instance passed in at instantiation.
 - `._modelExtras` is an object assigned to models before their interactions with
@@ -87,40 +87,104 @@ separate database environments.
 
 ## Functional spec
 
-The module will provide a Neon class called DomainContainer.
+### `DomainContainer` class
 
-This class, at instantiation, will take one Knex instance, an object with
-Krypton models and an optional `modelExtras` object.
+A Class which at initialization takes one argument which contains the options
+and properties the instance needs to function, and the optional ones as well.
 
-These properties will be saved as instance variables (some with `_` prefix
-to indicate they are private).
+It would contain the following props:
 
-The DomainContainer instance will provide the following instance methods:
+```js
+{
+  knex: Knex, // required
+  models: {}, // required
+  modelExtras: {}, // optional
+  props: {}, // optional
+}
+```
 
-- `#query(modelName)` returns a Krypton model QueryBuilder from the model that
-  it is being requested.
-- `#create(modelName, body)` creates a model instance with the properties of
-  `body` and saves the resulting model to the DB.
-- `#update(modelInstance, body)` calls `.updateAttributes(body)` on the provided
-  model and saves the changes to the DB, provided no `body` it'll just call
-  `modelInstance.save()`.
-- `#destroy(modelInstance)` calls `.destroy()` on the provided model.
-- `#get(modelName)` returns a model constructor.
-- `#cleanup()` destroys the container's Knex instance.
+- `knex` is the Knex instance that the container would use for all of its
+  requests to the DB.
+- `models` are the models that it will have access to for the methods.
+- `modelExtras` are just things that would get passed to the models before they
+  interact with the DB in case they want to do any actions there.
+- `props` are just static properties for or about the container.
 
-Notes:
+These get assigned to the instance's properties as follows:
 
-- All of the above methods use the Knex instance provided at the
-  DomainContainer's instantiation for their queries.
-- All of the above methods that interact with the DB directly (`#create`,
-  `#update` and `#destroy`) pass in the DomainContainer instance's
-  `this._modelExtras` properties to the models so that the models may make use
-  of them.  Also `#get`.
-- All of the amove methods when not being passed the model (i.e. the `#query` and
-  `#create` methods) they grab the model by doing something like
-  `this._models[modelName]`.
-- Most of the above methods (`#create`, `#update`, `#destroy` and
-  `#get`) add a `._container` variable to the model.
+```js
+{
+  _knex,
+  _models,
+  _modelExtras,
+  props,
+}
+```
+
+#### `#query(modelName)`
+
+Creates a Knex QueryBuilder based for the `modelName` that is passed in, it
+grabs the model from `this._models`.
+
+It then returns the result of calling `.query(this._knex)` on that model.
+
+Before doing so it adds the `._container` and `._modelExtras` properties to the
+model.
+
+Throws error if it can't find the `modelName` in `this._models`.
+
+#### `#create(modelName, body)`
+
+Creates a model (`this._models[modelName]`) with the given body, body should be
+an object otherwise the model will have problems.  Returns a Promise with the
+resulting created model.
+
+Before doing so it adds the `._container` and `._modelExtras` properties to the
+model.
+
+Throws error if it can't find the `modelName` in `this._models`.
+
+#### `#update(model, body)`
+
+Calls `.updateAttributes(body)` on the `model` and then `.save(this._knex)` and
+returns the generated Promise.
+
+Unless `body` is undefined, in which case it'll just do `.save(this._knex)`.
+
+Before doing so, though, it adds the `._container` and `._modelExtras`
+properties to the model.
+
+#### `#destroy(model)`
+
+Simply calls `.destroy(this._knex)` on the given `model` and returns the
+generated Promise.
+
+Before doing so it adds the `._container` and `._modelExtras` properties to the
+model.
+
+#### `#get(modelName)`
+
+Gets `this._models[modelName]` and then preloads that model with the following
+props:
+
+```js
+{ // constructor
+  _container,
+  _modelExtras,
+
+  prototype: {
+    _knex,
+    _container,
+    _modelExtras,
+  },
+}
+```
+
+Returns the generated model.
+
+#### `#cleanup()`
+
+Calls `this._knex.destroy()` and returns the generated Promise.
 
 ## Technical spec
 
