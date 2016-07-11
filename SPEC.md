@@ -1,32 +1,19 @@
 # DomainContainer Spec
 
-## Index
-
-- [Intro](#intro)
-- [Feature summary](#feature-summary)
-- [Background](#background)
-- [Constraints](#constraints)
-- [Assumptions](#assumptions)
-- [Blackbox](#blackbox)
-- [Functional spec](#functional-spec)
-- [Technical spec](#technical-spec)
-- [Code snippets](#code-snippets)
-- [Examples](#examples)
-  - [Multi-site](#multi-site)
-- [`customProps` use cases](#customprops-use-cases)
-  - [Mailers](#mailers)
-
 ## Intro
 
-This document defines a standalone (not related to any particular project)
-interface for Krypton models which offers a way to isolate the same models
-according to different environments, stuff like multi-site setups where the data
-structures are the same but the data is different since there are different DBs.
+This document defines an interface for Krypton models which offers a way to
+isolate the same models according to different environments.
+
+Especially useful with stuff like multi-site setups where the data structures
+are the same but the datas are different because there are several DBs.
 
 ## Feature summary
 
-- Allows you to give the same set of models different Knex instances
-  (especially useful in multi-site setups).
+- Allows you to give the same set of models different Knex instances,
+  i.e. different DB instances.
+- With the above, allows you for these models to be accessed through the same
+  interface, regardless of which DB instance the models are using.
 - Allows you to pass an arbitrary amount of properties to each model before any
   actions are carried out (except when querying).
 
@@ -37,20 +24,18 @@ carry around, without having to put it all in the `req` variable of your routing
 lib.  I.e. not have to pass around a Knex instance in the `req`, mailer
 instances, and many other environment specific vars.
 
-This module means to solve that environment containment for the models and other
-things the models may need.
+This module solves that environment containment problem.
 
 As long as one has some sort of way to uniquely identify the different
-DomainContainer, e.g. a subdomain, DomainContainer is useful as a way to
-separate database environments.
+DomainContainer instances, e.g. a subdomain, DomainContainer is useful as a way
+to separate database environments.
 
 ## Constraints
 
 - Has to use Neon DSL.
 - Has to interface with the Krypton ORM.
-- Has to provide a mechanism to pass in (once) an unspecified amount of
-  parameters to each model instance, which the instance may need to do its
-  thing.
+- Has to provide a mechanism to pass in an unspecified amount of properties to
+  each model instance, which the instance may need to do its things.
 
 ## Assumptions
 
@@ -87,6 +72,36 @@ separate database environments.
 
 ## Functional spec
 
+### `generateContainerModels(models, container)` function
+
+Takes in two objects as its arguments, the `models` object should be composed of
+model constructors and `containerInstance` should be the DomainContainer
+instance that contains the properties we will attach to models.
+
+What it does is loop through the objects and it generates an identical object in
+terms of properties and its contents, except the models it puts into the
+resulting object have some properties pre-loaded, namely:
+
+```js
+{
+  _container: container,
+  _modelExtras: container._modelExtras,
+
+  prototype: {
+    _container: container,
+    _modelExtras: container._modelExtras,
+  },
+}
+```
+
+And of course the properties the model sets by itself are not touched, unless
+they're named the same.  This allows the models inner routines to still make use
+of the container without having to jump through hoops to do so.
+
+Also setting it in the constructor and prototype allows the models to always use
+the constructor (for consistency) and outer stuff that wants to use the
+container can use the prototype stuff.
+
 ### `DomainContainer` class
 
 A Class which at initialization takes one argument which contains the options
@@ -105,19 +120,23 @@ It would contain the following props:
 
 - `knex` is the Knex instance that the container would use for all of its
   requests to the DB.
-- `models` are the models that it will have access to for the methods.
+- `models` are the models that the user will have access to use for the
+  DomainContainer methods.
 - `modelExtras` are just things that would get passed to the models before they
   interact with the DB in case they want to do any actions there.
 - `props` are just static properties for or about the container.
 
-These get assigned to the instance's properties as follows:
+#### Instantiation
+
+At instantiation, with the passed in `initProps` property it would assign the
+following properties to the DomainContainer instance:
 
 ```js
 {
-  _knex,
-  _models,
-  _modelExtras,
-  props,
+  _knex: initProps.knex,
+  _models: generateContainerModels(initProps.models), // functionality described above
+  _modelExtras: initProps.modelExtras || {},
+  props: initProps.props || {},
 }
 ```
 
@@ -128,19 +147,20 @@ grabs the model from `this._models`.
 
 It then returns the result of calling `.query(this._knex)` on that model.
 
-Before doing so it adds the `._container` and `._modelExtras` properties to the
-model.
-
 Throws error if it can't find the `modelName` in `this._models`.
 
 #### `#create(modelName, body)`
 
 Creates a model (`this._models[modelName]`) with the given body, body should be
-an object otherwise the model will have problems.  Returns a Promise with the
+an object otherwise the model will have problems.
+
+Calls `.save()` on the new model instance and returns a Promise with the
 resulting created model.
 
-Before doing so it adds the `._container` and `._modelExtras` properties to the
-model.
+As a work around for a problem that Checkit has (see
+[#73](https://github.com/tgriesser/checkit/issues/73)) we explicitly set the new
+model's `._modelExtras` and `._container` to be what they should be, so they
+don't get lost while getting cloned by Checkit.
 
 Throws error if it can't find the `modelName` in `this._models`.
 
@@ -151,250 +171,379 @@ returns the generated Promise.
 
 Unless `body` is undefined, in which case it'll just do `.save(this._knex)`.
 
-Before doing so, though, it adds the `._container` and `._modelExtras`
-properties to the model.
+Just like `#create`, as a work around for a problem that Checkit has (see
+[#73](https://github.com/tgriesser/checkit/issues/73)) we explicitly set the new
+model's `._modelExtras` and `._container` to be what they should be, so they
+don't get lost while getting cloned by Checkit.
 
 #### `#destroy(model)`
 
 Simply calls `.destroy(this._knex)` on the given `model` and returns the
 generated Promise.
 
-Before doing so it adds the `._container` and `._modelExtras` properties to the
-model.
-
 #### `#get(modelName)`
 
-Gets `this._models[modelName]` and then preloads that model with the following
-props:
+Returns `this._models[modelName]`
+
+#### `#cleanup()`
+
+Calls `this._knex.destroy()` and returns the generated Promise.
+
+Throws error if it can't find the `modelName` in `this._models`.
+
+## Technical spec
+
+### Function `generateContainerModels(<Object> models, <DomainContainer> container)`
+
+Parameters:
+
+- `models`, Required, Object, object made up of the model constructors.
+- `container`, Required, DomainContainer instance, instance containing the
+  properties that will be assigned to the newly generated models.
+
+Returns:
+
+An Object made up of the same same keys as the passed-in `models`, with the same
+models, except they've been pre-loaded with some properties:
 
 ```js
-{ // constructor
+{
   _container,
   _modelExtras,
 
   prototype: {
-    _knex,
     _container,
     _modelExtras,
   },
 }
 ```
 
-Returns the generated model.
+Typical use case:
 
-#### `#cleanup()`
+```js
+// M = global project's models namespace
 
-Calls `this._knex.destroy()` and returns the generated Promise.
+// inside container instantiation
+this._models = generateContainerModels(M, this);
+```
 
-## Technical spec
+Pseudo-code:
+
+```
+Set result to be equal to an empty Object
+
+Call Object.keys() with arguments:
+  1. `models`
+Call on that result .foreach() with arguments:
+  1. function with arguments `key`
+    Set Model to be equal to `models[key]`
+
+    Set TmpModel to be equal to:
+      Call Class() with arguments:
+        1. Empty Object
+        2. `key`
+      Call on that result .inherits() with arguments:
+        1. `Model`
+      Invoke resulting function with arguments:
+        1. Object: {
+          _modelExtras: `container._modelExtras`
+          _container: `container`
+
+          prototype: Object: {
+            _modelExtras: `container._modelExtras`
+            _container: `container`
+          }
+        }
+
+    Call TmpModel.knex() with arguments:
+      1. `container._knex`
+
+    Set `result[key]` to be equal to `TmpModel`
+
+Return `result`
+```
 
 ### Class `DomainContainer(<Object> initProps)`
 
-`<Object> initProps` available properties:
+#### Initialization
 
-- `<Knex> knex` a Knex instance which will be used in all the models' queries.
-- `<Object> models` an object with all of the models the container will wrap.
-  Must be model constructors, not instances.
-- `<Object> {Optional} modelExtras` props that will be handed to every model
-  instance that will be used to modify the DB in some way (not query).
-- `<Object> {Optional} props` props that can serve as metadata for the
-  container, whatever you make of it.
+Parameters:
 
-#### Instance variables
+- `initProps`, Required, Object:
+  - `knex`, Required, Knex instance, Knex instance which will be used in the
+    queries.
+  - `models`, Required, Object, an object with all of the models constructors
+    the container will wrap.
+  - `modelExtras`, Optional, Object, object assigned to models before their
+  interactions with the DB.
+  - `props`, Optional, Object, metadata for the container.
 
-These are mostly set by the `<Object> initProps` parameter set and
-DomainContainer instantiation.
+Typical use case:
 
-##### `_knex`
-
-Required, no default.
-
-Holds the Knex instance that will be provided to every model.
-
-It's set to whatever the `initProps.knex` property was when instantiating the
-DomainContainer.
-
-##### `_models`
-
-Required, no default.
-
-Holds all the models that will be avaialble to the DomainContainer.  Must be the
-constructors.
-
-It's set to whatever the `initProps.models` property was when instantiating the
-DomainContainer.
-
-##### `_modelExtras`
-
-Default: Empty object (`{}`).
-
-Holds the properties that will be passed in to each model whenever it is being
-used to apply changes to the DB.
-
-This could be anything, changes from project to project, but an easy example
-would be mailer instances which the models would use, instead of some global
-one which isn't configured for the specific models.
-
-It's set to whatever the `initProps.modelExtras` property was when instantiating
-the DomainContainer.
-
-##### `props`
-
-Default: Empty object (`{}`).
-
-Holds static properties about the DomainContainer, like a metadata variable
-about the, like its ID within the system, or really whatever is useful for the
-use case.
-
-#### Instance methods
-
-##### `#init(<Object> initProps)`
-
-This method is run whenever the Class is instantiated, i.e. whenever a new
-DomainContainer instance is created.
-
-It should throw an error if `initProps.knex` or `initProps.models` are not
-defined or if `initProps.models` is not an object.
-
-Pseudo-code:
-
-```text
-if initProps.knex is undefined
-  throw error 'initProps.knex property is required'
-else
-  set this._knex to be initProps.knex
-
-if initProps.models is undefined or is not an object
-  throw error 'initProps.models property is required and should be an object'
-else
-  set this._models to be initProps.models
-
-extend this._modelExtras with initProps.modelExtras
-extend this.props with initProps.props
+```js
+var container = new DomainContainer({
+  props: {
+    installationName: req.installationName,
+  },
+  knex: knexInst,
+  models: M,
+  modelExtras: {
+    mailers: {
+      user: new UserMailer(),
+    },
+  },
+});
 ```
 
-##### `#query(<String> modelName)`
-
-This method returns a Krypton QueryBuilder for the requested model.  It returns
-an error if the model doesn't exist.
-
 Pseudo-code:
 
-```text
-let Model be that._models[modelName] // for convenience
+```
+If `initProps.knex` is undefined
+  Throw new Error 'initProps.knex property is required'
+Else
+  Set this._knex to be equal to `initProps.knex`
 
-if Model is undefined
-  return rejected promise with error 'Model '+modelName+' doesn\'t exist in the DomainContainer'
+Set this._modelExtras to be equal to `initProps.modelExtras` Or an empty Object if undefined
+Set this._props to be equal to `initProps.props` Or an empty Object if undefined
 
-else return instance of Model's QueryBuilder with that._knex passed in
+If `initProps.models` is undefined or not an Object
+  Throw new Error 'initProps.models property is required and should be an object'
+Else
+  Set this._knex to be equal to:
+    Call generateContainerModels() with arguments:
+      1. `initProps.models`
+      1. `this`
 ```
 
-##### `#create(<String> modelName, <Object> body)`
+#### `#query(<String> modelName)`
 
-This method creates a new entry in the DB with the model provided (identified by
-`<String> modelName` parameter) and returns the instance of that model that was
-saved.  The contents of the new model are contained in the `<Object> body`
-parameter.  It returns an error if the model doesn't exist.
+Parameters:
 
-Pseudo-code:
+- `modelName`, Required, String, the name of the model for which to get a
+  Krypton QueryBuilder.
 
-```text
-let Model be that._models[modelName] // for convenience
+Returns:
 
-if Model is undefined
-  return rejected promise with error 'Model '+modelName+' doesn\'t exist in the DomainContainer'
+Krypton QueryBuilder for the requested `modelName`.
 
-make new instance of Model with the provided body
+If `this._models[modelName]` is undefined it returns a rejected Promise with
+`Error('Model ${modelName} doesn\'t exist in the DomainContainer')` as the
+reason.
 
-let model instance's ._modelExtras be this._modelExtras
-let model instance's ._container point to this
+Typical use case:
 
-return do model.save passing in the this._knex instance
-  then
-    return model instance
+```js
+container.query('User')
+  .where('id', req.params.id)
+  .andWhere('name', '!=', 'John')
+  .then(...)
+  .catch(...);
 ```
 
-##### `#update(<Model> model, <Object> {Optional} body)`
-
-This method receives a pre-existing model (`<Model> model`) and updates it with
-the parameters passed in through the `<Object> body` parameter.
-
-If the <Object> body parameter is not provided then it will just call `.save()`
-on the provided model (`<Model> model`).
-
 Pseudo-code:
 
-```text
-let passed in model's ._modelExtras to be this._modelExtras
-let passed in model's ._container point to this
+```
+Set Model to be equal to `this._models[modelName]`
 
-let body be an empty object by default
-run model.updateAttributes with body parameter passed in
-
-return do model.save passing in the this._knex instance
-  then
-    return model instance
+If Model is equal to undefined
+  Return rejected Promise with Error 'Model ${modelName} doesn\'t exist in the DomainContainer'
+Else
+  Return Call to Model.query() with arguments:
+    1. this._knex
 ```
 
-##### `#destroy(<Model> model)`
+#### `#create(<String> modelName, <Object> body)`
 
-This method destroys the record in the DB for the provided model (`<Model>
-model` parameter).
+Parameters:
 
-Pseudo-code:
+- `modelName`, Required, String, the name of the model which to create.
+- `body`, Required, Object, the body for the new model.
 
-```text
-let passed in model's ._modelExtras to be this._modelExtras
-let passed in model's ._container point to this
+Returns:
 
-return do model.destroy passing in the this._knex instance
-  then
-    return model instance
+A Promise which has the newly created model instance.
+
+If `this._models[modelName]` is undefined it returns a rejected Promise with
+`Error('Model ${modelName} doesn\'t exist in the DomainContainer')` as the
+reason.
+
+Typical use case:
+
+```js
+container.create('User', { name: 'Jon' })
+  .then(...)
+  .catch(...);
 ```
 
-##### `#get(<String> modelName)`
-
-This method returns a model class, which it grabs from `._models`
-according ot the `<String> modelName>` parameter, after assigning to
-it a Knex instance and the `._modelExtras`.
-
-Designed mainly so one may make use of class methods in the models.
-
 Pseudo-code:
 
-```text
-let Model be that._models[modelName] // for convenience
+```
+Set Model to be equal to `this._models[modelName]`
 
-if Model is undefined
-  return rejected promise with error 'Model '+modelName+' doesn\'t exist in the DomainContainer'
+If Model is equal to undefined
+  Return rejected Promise with Error 'Model ${modelName} doesn\'t exist in the DomainContainer'
+Else
+  Set model be equal to:
+    Call to `new Model` with arguments:
+      1. `body`
 
-create temp module which has in prototype
-  _modelExtras
-  _container
-  _knex
-and as class static properties
-  _modelExtras
-  _container
+  Set model._modelExtras to point to `this._modelExtras`
+  Set model._container to point to `this`
 
-create temp class which inherits from Model and includes temp module
-
-call knex on temp class passing in this._knex
-
-return temp class
+  Return:
+    Call model.save()
+    Chain .then() with arguments:
+      1. function with no arguments
+        Return `model`
 ```
 
-##### `#cleanup()`
+#### `#update(<Model> model, <Object> {Optional} body)`
 
-This method returns a promise.  It simply runs `.destroy()` on the
-Knex instance and it overrides all the methods with a method that
-throws upon usage, so the DomainContainer can't be called anew.
+Parameters:
+
+- `model`, Required, model instance, model to update in the DB.
+- `body`, Optional, Object, body to apply to model instance.
+
+Returns:
+
+Result of `model.save(this._knex)`.
+
+Typical use cases:
+
+```js
+var model = new M.Model({
+  id: 1,
+  name: 'Josh', // old name 'Jon'
+});
+
+container.update(model)
+  .then(...)
+  .catch(...);
+```
+
+```js
+var model = new M.Model({
+  id: 1,
+  name: 'Jon',
+});
+
+container
+  .update(model, {
+    name: 'Josh',
+  })
+  .then(...)
+  .catch(...);
+```
 
 Pseudo-code:
 
-```text
-run this._knex.destroy()
+```
+If `body` is not undefined
+  Call model.updateAttributes() with arguments:
+    1. `body`
+Else
+  Set model._modelExtras to point to `this._modelExtras`
+  Set model._container to point to `this`
 
-on the .destroy() callback/resolved promise return a resolved promise
+  Return:
+    Call model.save() with arguments:
+      1. `this._knex`
+    Chain .then() with arguments:
+      1. function with no arguments
+        Return `model`
+```
+
+#### `#destroy(<Model> model)`
+
+Parameters:
+
+- `model`, Required, model instance, model to delete from DB.
+
+Returns:
+
+Typical use case:
+
+```js
+var model = new M.Model({ id: 1 });
+
+container.destroy(model)
+  .then(...)
+  .catch(...);
+```
+
+Pseudo-code:
+
+```
+Set model._modelExtras to point to `this._modelExtras`
+Set model._container to point to `this`
+
+Return:
+  Call model.destroy() with arguments:
+    1. `this._knex`
+  Chain .then() with arguments:
+    1. function with no arguments
+      Return `model`
+```
+
+#### `#get(<String> modelName)`
+
+Parameters:
+
+- `modelName`, Required, String, name of model to fetch the constructor for.
+
+Returns:
+
+The requested model constructor.
+
+If `this._models[modelName]` is undefined it returns a rejected Promise with
+`Error('Model ${modelName} doesn\'t exist in the DomainContainer')` as the
+reason.
+
+Typical use case:
+
+```js
+var Model = container.get('Model');
+
+var model = new Model(...);
+
+...
+```
+
+Pseudo-code:
+
+```
+Set Model to be equal to `this._models[modelName]`
+
+If Model is equal to undefined
+  Return rejected Promise with Error 'Model ${modelName} doesn\'t exist in the DomainContainer'
+Else
+  Return `Model`
+```
+
+#### `#cleanup()`
+
+Parameters: none
+
+Returns:
+
+Typical use case:
+
+```js
+container.cleanup()
+  .then(...)
+  .catch(...);
+```
+
+Pseudo-code:
+
+```
+Set that to equal `this`
+
+Return new Promise with arguments:
+  1. function with arg `resolve`
+    Call that._knex.destroy() with arguments:
+      1. function
+        Call resolve() with no arguments
 ```
 
 ## Code snippets
@@ -431,79 +580,6 @@ DomainContainer({
   destroy: function () {...},
   get: function () {...},
 });
-```
-
----
-
-```javascript
-var container = new DomainContainer({...});
-
-container.query('User'); // => User QueryBuilder
-```
-
----
-
-```javascript
-var container = new DomainContainer({...});
-
-container
-  .create('User', {
-    email: 'example@gmail.com',
-    password: 'yay',
-  })
-  .then(function (user) {
-    // user is the model of the record that was created in the DB
-  });
-
-// In the DB there is a new record:
-// {
-//   id: 1,
-//   email: 'example@gmail.com',
-//   password: 'yay',
-// }
-//
-// An email is sent from a mailer to example@gmail.com with a token
-```
-
----
-
-```javascript
-var container = new DomainContainer({...});
-
-var model = new User({ id: 1 });
-
-container
-  .update(model, {
-    password: 'nope',
-  })
-  .then(function (user) {
-    // user is the model of the record that was created in the DB
-  });
-
-// In the DB, the record created above is updated to:
-// {
-//   id: 1,
-//   password: 'nope',
-//   ...
-// }
-//
-// An email is sent from a mailer to example@gmail.com to inform of password change
-```
-
----
-
-```javascript
-var container = new DomainContainer({...});
-
-var model = new User({ id: 1 });
-
-container
-  .destroy(model)
-  .then(function () {
-    // ...
-  });
-
-// In the DB, the record created above no longer exists
 ```
 
 ---
@@ -548,14 +624,6 @@ container2.query('User')
 
 ---
 
-```javascript
-var container = new DomainContainer({...});
-
-container.get('User'); // => User model with ._knex and ._modelExtras set
-```
-
----
-
 Model making use of `._container`.
 
 ```javascript
@@ -565,7 +633,7 @@ var Model = Class({}, 'Model').inherits(Krypton.Model)({
       var that = this;
 
       that.on('beforeCreate', function (next) {
-        that._container
+        that.constructor._container
           .create('Model2', { some: 'value' })
           .then(function (model) {
             return next();
@@ -575,12 +643,6 @@ var Model = Class({}, 'Model').inherits(Krypton.Model)({
     },
   },
 });
-```
-
-```javascript
-var container = new DomainContainer({...});
-
-container.cleanup(); // => Promise
 ```
 
 ## Examples
