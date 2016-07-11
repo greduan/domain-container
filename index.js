@@ -18,7 +18,8 @@ var generateContainerModels = function (models, container) {
     var Model = models[key];
 
     var TmpModel = Class({}, key)
-      .inherits(Model)({
+      .inherits(Model)
+      ({
         _modelExtras: container._modelExtras,
         _container: container,
 
@@ -56,7 +57,6 @@ var DomainContainer = Class({}, 'DomainContainer')({
       that._knex = initProps.knex;
 
       that._modelExtras = initProps.modelExtras || {};
-      that.presenters = initProps.presenters || {};
       that.props = initProps.props || {};
 
       if (_.isUndefined(initProps.models) || !_.isObject(initProps.models)) {
@@ -100,7 +100,9 @@ var DomainContainer = Class({}, 'DomainContainer')({
     update: function (model, body) {
       var that = this;
 
-      model.updateAttributes(body || {});
+      if (body) {
+        model.updateAttributes(body);
+      }
 
       model._modelExtras = that._modelExtras;
       model._container = that;
@@ -138,7 +140,7 @@ var DomainContainer = Class({}, 'DomainContainer')({
     cleanup: function () {
       var that = this;
 
-      return new Promise(function (resolve, reject) {
+      return new Promise(function (resolve) {
         that._knex.destroy(function () {
           resolve();
         });

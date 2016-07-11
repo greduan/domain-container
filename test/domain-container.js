@@ -50,7 +50,6 @@ describe('DomainContainer', function () {
           knex: knex,
           models: models,
           modelExtras: {},
-          presenters: {},
         });
       };
 
@@ -103,9 +102,6 @@ describe('DomainContainer', function () {
         modelExtras: {
           foo: 'yes',
         },
-        presenters: {
-          bar: 'yes',
-        },
         props: {
           man: 'yes',
         },
@@ -119,9 +115,6 @@ describe('DomainContainer', function () {
 
       expect(container).to.have.property('props');
       expect(container.props).to.eql({ man: 'yes' });
-
-      expect(container).to.have.property('presenters');
-      expect(container.presenters).to.eql({ bar: 'yes' });
 
       return doneTest();
     });
@@ -140,9 +133,6 @@ describe('DomainContainer', function () {
 
       expect(container).to.have.property('props');
       expect(container.props).to.be.empty();
-
-      expect(container).to.have.property('presenters');
-      expect(container.presenters).to.be.empty();
 
       return doneTest();
     });
