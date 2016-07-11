@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.  This
 project adheres to [Semantic Versioning](http://semver.org/).
 
+## [3.0.0] - 2016-07-07
+
+### Changed
+
+- Basically, all the models now get a new constructor made for them at instantiation time.
+- `#create()` model no longer receives a Knex instance.
+
 ## [2.6.0] - 2016-05-18
 
 ### Fixed
@@ -78,6 +85,7 @@ It's all in the SPEC.md file.
 
 Initial release.  It's all in the SPEC.md file.
 
+[3.0.0]: https://github.com/greduan/domain-container/commit/131eb94ccd185f39996e0647d754607f13ff6b55
 [2.6.0]: https://github.com/greduan/domain-container/tree/a5e6af0ea00388634ca30353d3972166d6568aca
 [2.5.0]: https://github.com/greduan/domain-container/tree/c73420f4520c2d0d1eedf8c8298779be9a079a6b
 [2.4.0]: https://github.com/greduan/domain-container/tree/f9bb3cfd9ecdfa928380c7070bcc46cf59af30cc
